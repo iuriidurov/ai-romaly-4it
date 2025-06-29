@@ -1,0 +1,272 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 50px;
+    background-color: #eaf6ff;
+    border-bottom: 2px solid #bde0fe;
+}
+
+.logo h1 {
+    margin: 0;
+    color: #007bff;
+}
+
+.logo p {
+    margin: 0;
+    font-size: 0.9em;
+}
+
+.search-bar {
+    display: flex;
+    flex-grow: 0.5;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-right: none;
+    border-radius: 5px 0 0 5px;
+}
+
+.search-bar button {
+    padding: 10px;
+    border: 1px solid #007bff;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    border-radius: 0 5px 5px 0;
+}
+
+.login-button button {
+    padding: 10px 20px;
+    background-color: #fff;
+    border: 1px solid #007bff;
+    color: #007bff;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.container {
+    display: flex;
+    padding: 20px 50px;
+}
+
+.left-column, .right-column {
+    width: 20%;
+    padding: 0 20px;
+}
+
+.center-column {
+    width: 60%;
+    padding: 0 20px;
+}
+
+aside h2 {
+    color: #007bff;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}
+
+aside ul {
+    list-style: none;
+    padding: 0;
+}
+
+aside ul li {
+    margin-bottom: 10px;
+}
+
+aside ul li a {
+    text-decoration: none;
+    color: #333;
+}
+
+aside ul li a:hover {
+    text-decoration: underline;
+}
+
+.track-list {
+    margin-top: 20px;
+}
+
+.track-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.track-play .play-btn {
+    background: none;
+    border: 2px solid #007bff;
+    border-radius: 50%;
+    color: #007bff;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+    margin-right: 15px;
+}
+
+.track-info {
+    flex-grow: 1;
+}
+
+.track-info .track-title {
+    margin: 0;
+    font-weight: bold;
+}
+
+.track-info .track-author {
+    margin: 0;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.track-actions a {
+    margin-left: 15px;
+    color: #666;
+    text-decoration: none;
+}
+
+.track-actions a:hover {
+    color: #007bff;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.pagination a {
+    color: #007bff;
+    padding: 8px 16px;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    margin: 0 4px;
+}
+
+.pagination a.active {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+}
+
+.pagination a:hover:not(.active) {
+    background-color: #ddd;
+}
+
+.user-panel {
+    display: flex;
+    align-items: center;
+}
+
+.user-info {
+    margin-right: 15px;
+    font-weight: bold;
+    color: #d9534f;
+}
+
+.user-panel a {
+    color: #333;
+    text-decoration: none;
+    border: 1px solid #ccc;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.user-panel a:hover {
+    background-color: #333;
+    color: #fff;
+}
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 400px;
+    border-radius: 10px;
+    position: relative;
+}
+
+.close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Form Styles */
+#login-form-container h2, #register-form-container h2 {
+    text-align: center;
+    color: #007bff;
+}
+
+#login-form input, #register-form input {
+    width: 95%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#login-form button, #register-form button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#login-form p, #register-form p {
+    text-align: center;
+    margin-top: 15px;
+}
+
+#login-form a, #register-form a {
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: underline;
+}

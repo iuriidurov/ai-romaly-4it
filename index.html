@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>АІ-РОМАЛЫ - Музыкальная нейроколлекция</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>АІ-РОМАЛЫ</h1>
+            <p>Музыкальная нейроколлекция</p>
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="Поиск музыки...">
+            <button><i class="fa fa-search"></i></button>
+        </div>
+        <div class="user-panel">
+            <a id="cabinet-link" href="/cabinet" class="user-info-link" style="display: none;">
+                <span id="username-display"></span> (<span id="user-role-display"></span>)
+            </a>
+            <a href="#" id="logout-btn" class="auth-btn" style="display: none;">ВЫЙТИ</a>
+            <a href="#" id="login-btn" class="auth-btn">ВОЙТИ В КАБИНЕТ</a>
+        </div>
+    </header>
+
+    <main class="container">
+        <aside class="left-column">
+            <h2>Сборники треков</h2>
+            <ul>
+                <li><a href="#">Каверы известных песен</a></li>
+                <li><a href="#">Извинение после ссоры</a></li>
+                <li><a href="#">Признание в любви</a></li>
+                <li><a href="#">Предложение руки и сердца</a></li>
+                <li><a href="#">Свадебный подарок от друзей</a></li>
+                <li><a href="#">Годовщина отношений</a></li>
+                <li><a href="#">На день рождения/юбилей</a></li>
+                <li><a href="#">Для ребёнка от родителей</a></li>
+                <li><a href="#">Для друзей</a></li>
+                <li><a href="#">Ребёнку на выступление</a></li>
+                <li><a href="#">Прощание (переезд, утрата)</a></li>
+                <li><a href="#">Для коллег по работе, начальнику</a></li>
+            </ul>
+        </aside>
+
+        <section class="center-column">
+            <h2>AI-МУЗЫКА mp3 - слушать и скачать бесплатно</h2>
+            <div class="track-list">
+                <p>Загрузка треков...</p>
+            </div>
+            <div class="pagination">
+                <a href="#">&laquo;</a>
+                <a href="#" class="active">1</a>
+                <a href="#">2</a>
+                <a href="#">3</a>
+                <a href="#">&raquo;</a>
+            </div>
+        </section>
+
+        <aside class="right-column">
+            <div class="recommendations">
+                <h2>Рекомендуем</h2>
+                <!-- Placeholder for recommended content -->
+            </div>
+            <div class="top-authors">
+                <h2>Топ лучших авторов</h2>
+                <ul>
+                    <li>YURIY ROMANI</li>
+                    <li>ALEX GROM</li>
+                </ul>
+            </div>
+        </aside>
+    </main>
+
+    <script src="js/main.js"></script>
+    <audio id="audio-player"></audio>
+
+    <!-- Login/Register Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div id="login-form-container">
+                <h2>Вход в кабинет</h2>
+                <form id="login-form">
+                    <input type="text" name="username" placeholder="Логин" required>
+                    <input type="password" name="password" placeholder="Пароль" required>
+                    <button type="submit">Войти</button>
+                    <p>Нет аккаунта? <a href="#" id="show-register">Зарегистрироваться</a></p>
+                </form>
+            </div>
+            <div id="register-form-container" style="display:none;">
+                <h2>Регистрация автора</h2>
+                <form id="register-form">
+                    <input type="text" name="username" placeholder="Придумайте логин" required>
+                    <input type="password" name="password" placeholder="Придумайте пароль" required>
+                    <button type="submit">Зарегистрироваться</button>
+                    <p>Уже есть аккаунт? <a href="#" id="show-login">Войти</a></p>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

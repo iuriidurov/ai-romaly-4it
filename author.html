@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет - AI-Ромалы</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1><a href="/">AI-РОМАЛЫ</a></h1>
+            <p>Музыкальная нейроколлекция</p>
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="Поиск музыки...">
+            <button><i class="fa fa-search"></i></button>
+        </div>
+        <div class="user-panel">
+            <a id="cabinet-link" href="/cabinet" class="user-info-link" style="display: none;">
+                <span id="username-display"></span> (<span id="user-role-display"></span>)
+            </a>
+            <a href="#" id="logout-btn" class="auth-btn" style="display: none;">ВЫЙТИ</a>
+            <a href="#" id="login-btn" class="auth-btn">ВОЙТИ В КАБИНЕТ</a>
+        </div>
+    </header>
+
+    <div class="container author-container">
+        <aside class="left-column">
+            <h3>Сборники треков</h3>
+            <ul class="collections-list">
+                <li><a href="#">Каверы известных песен</a></li>
+                <li><a href="#">Извинение после ссоры</a></li>
+                <li><a href="#">Признание в любви</a></li>
+                <li><a href="#">Предложение руки и сердца</a></li>
+                <li><a href="#">Свадебный подарок от друзей</a></li>
+                <li><a href="#">Годовщина отношений</a></li>
+                <li><a href="#">На день рождения/юбилей</a></li>
+                <li><a href="#">Для ребёнка от родителей</a></li>
+                <li><a href="#">Для друзей</a></li>
+                <li><a href="#">Ребёнку на выступление</a></li>
+                <li><a href="#">Прощание (переезд, утрата)</a></li>
+                <li><a href="#">Для коллег по работе, начальнику</a></li>
+            </ul>
+        </aside>
+
+        <main class="center-column">
+            <button class="upload-btn">Загрузить трек</button>
+            <h2>AI-МУЗЫКА mp3 - слушать и скачать бесплатно</h2>
+            <div id="author-track-list" class="track-list">
+                <p>Загрузка ваших треков...</p>
+                <!-- Author's tracks will be loaded here by JavaScript -->
+            </div>
+            <div class="pagination">
+                <!-- Pagination controls will be loaded here -->
+            </div>
+        </main>
+
+        <aside class="right-column">
+            <h3>Рекомендуем</h3>
+            <!-- Recommended content here -->
+            <h3>Топ лучших авторов</h3>
+            <ul id="authors-list" class="authors-list">
+                <li>Загрузка авторов...</li>
+                <!-- Authors list will be loaded here by JavaScript -->
+            </ul>
+        </aside>
+    </div>
+
+    <audio id="audio-player" src=""></audio>
+
+    <script src="/js/author.js"></script>
+</body>
+</html>
