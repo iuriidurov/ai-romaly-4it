@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="track-info">
                         <p class="track-title">${track.title}</p>
-                        <p class="track-author">${track.author.name} / ${track.collectionName || 'Без сборника'}</p>
+                        <p class="track-author">${currentUser.name} / ${track.collectionName || 'Без сборника'}</p>
                     </div>
                     <div class="track-actions">
                         <a href="#" title="Поделиться"><i class="fa fa-share-alt"></i></a>
@@ -227,8 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const showUploadModal = () => {
         resetUploadForm();
         loadCollections();
-        if (currentUser && currentUser.username) {
-            authorInput.value = currentUser.username;
+                if (currentUser && currentUser.name) {
+            authorInput.value = currentUser.name;
         }
         uploadModal.style.display = 'block';
     };
