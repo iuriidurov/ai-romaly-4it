@@ -242,7 +242,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (currentUser.role === 'admin') {
         adminControls.style.display = 'flex';
+                document.getElementById('admin-authors-list-btn').addEventListener('click', () => {
+            window.location.href = '/admin-authors';
+        });
         document.getElementById('admin-upload-btn').addEventListener('click', showUploadModal);
+        document.getElementById('admin-create-collection-btn').addEventListener('click', () => {
+            window.location.href = '/admin-collections';
+        });
     } else if (currentUser.role === 'author') {
         authorUploadBtn.style.display = 'block';
         authorUploadBtn.addEventListener('click', showUploadModal);

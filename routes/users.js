@@ -8,8 +8,12 @@ const {
     getUsers,
     forgotPassword,
     resetPassword,
-    getAuthors
+    getAuthors,
+    deleteUser
 } = require('../controllers/userController');
+
+const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
 
 // @route   POST api/users/register
 // @desc    Register a new user
@@ -40,5 +44,10 @@ router.get('/', getUsers);
 // @desc    Get top authors
 // @access  Public
 router.get('/authors', getAuthors);
+
+// @route   DELETE api/users/:id
+// @desc    Delete a user and their tracks
+// @access  Private (Admin only)
+router.delete('/:id', [auth, admin], deleteUser);
 
 module.exports = router;

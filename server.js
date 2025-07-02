@@ -60,9 +60,11 @@ app.get('/api', (req, res) => {
 // API Routes
 const trackRoutes = require('./routes/tracks');
 const userRoutes = require('./routes/users');
+const collectionRoutes = require('./routes/collections');
 
 app.use('/api/tracks', trackRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/collections', collectionRoutes);
 
 // Page Routes
 app.get('/', (req, res) => {
@@ -71,6 +73,14 @@ app.get('/', (req, res) => {
 
 app.get('/cabinet', (req, res) => {
     res.sendFile(path.join(__dirname, 'author.html'));
+});
+
+app.get('/admin-authors', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin-authors.html'));
+});
+
+app.get('/admin-collections', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin-collections.html'));
 });
 
 app.listen(PORT, () => {

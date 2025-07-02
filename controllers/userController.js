@@ -3,6 +3,9 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const config = require('config');
 const User = require('../models/User');
+const Track = require('../models/Track');
+const fs = require('fs');
+const path = require('path');
 
 // @route   POST api/users/register
 // @desc    Register a new user
@@ -151,5 +154,52 @@ exports.getAuthors = async (req, res) => {
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Ошибка сервера');
+    }
+};
+
+// @route   DELETE api/users/:id
+// @desc    Delete a user and their tracks by Admin
+// @access  Private (Admin)
+exports.deleteUser = async (req, res) => {
+    try {
+        const userIdToDelete = req.params.id;
+        const adminId = req.user.id;
+
+        // Admin cannot delete themselves
+        if (userIdToDelete === adminId) {
+            return res.status(400).json({ msg: 'Администратор не может удалить собственную учетную запись.' });
+        }
+
+        const user = await User.findById(userIdToDelete);
+        if (!user) {
+            return res.status(404).json({ msg: 'Пользователь не найден.' });
+        }
+
+        // Find and delete all tracks associated with the user
+        const tracks = await Track.find({ author: userIdToDelete });
+
+        // Delete track files from the filesystem
+        for (const track of tracks) {
+            const trackPath = path.join(__dirname, '..', track.filePath);
+            try {
+                if (fs.existsSync(trackPath)) {
+                    fs.unlinkSync(trackPath);
+                }
+            } catch (err) {
+                console.error(`Не удалось удалить файл трека: ${trackPath}`, err);
+            }
+        }
+
+        // Delete tracks from the database
+        await Track.deleteMany({ author: userIdToDelete });
+
+        // Delete the user
+        await User.findByIdAndDelete(userIdToDelete);
+
+        res.json({ msg: `Пользователь ${user.name} и все его треки были успешно удалены.` });
+
+    } catch (err) {
+        console.error('DELETE_USER_ERROR:', err);
+        res.status(500).json({ msg: 'Ошибка на сервере при удалении пользователя.' });
     }
 };
