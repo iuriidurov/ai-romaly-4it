@@ -61,19 +61,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderCollections = (collections) => {
         collectionsManagementList.innerHTML = '';
-        const ul = document.createElement('ul');
         collections.forEach(collection => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <span>${collection.name}</span>
-                <div>
-                    <button class="btn-edit" data-id="${collection._id}" data-name="${collection.name}">Редактировать</button>
-                    <button class="btn-delete" data-id="${collection._id}">Удалить</button>
-                </div>
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${collection.name}</td>
+                <td class="actions">
+                    <button class="btn btn-primary btn-edit" data-id="${collection._id}" data-name="${collection.name}">Редактировать</button>
+                    <button class="btn btn-danger btn-delete" data-id="${collection._id}">Удалить</button>
+                </td>
             `;
-            ul.appendChild(li);
+            collectionsManagementList.appendChild(tr);
         });
-        collectionsManagementList.appendChild(ul);
     };
 
     const openModalForEdit = (id, name) => {

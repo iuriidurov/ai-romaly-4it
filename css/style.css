@@ -398,10 +398,80 @@ aside ul li a:hover {
     width: 100%;
     padding: 10px;
     background-color: #007bff;
-    color: white;
+}
+
+/* General Button Styles */
+.btn {
+    padding: 8px 15px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* Admin Management Table */
+.table-management {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table-management th,
+.table-management td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.table-management th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.table-management tr:last-child td {
+    border-bottom: none;
+}
+
+.table-management tr:hover {
+    background-color: #f1f1f1;
+}
+
+.table-management .actions {
+    text-align: right;
+}
+
+.table-management .actions .btn {
+    margin-left: 10px;
 }
 
 #login-form p, #register-form p {
