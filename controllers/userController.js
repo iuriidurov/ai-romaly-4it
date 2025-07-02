@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const config = require('config');
 const User = require('../models/User');
@@ -7,50 +8,37 @@ const User = require('../models/User');
 // @desc    Register a new user
 // @access  Public
 exports.register = async (req, res) => {
-    const { username, password, role } = req.body;
+    const { name, emailOrPhone, password, password2 } = req.body;
+
+    if (!name || !emailOrPhone || !password || !password2) {
+        return res.status(400).json({ msg: 'Пожалуйста, заполните все поля' });
+    }
+    if (password !== password2) {
+        return res.status(400).json({ msg: 'Пароли не совпадают' });
+    }
 
     try {
-        // Check if user exists
-        let user = await User.findOne({ username });
+        let user = await User.findOne({ emailOrPhone });
         if (user) {
-            return res.status(400).json({ msg: 'User already exists' });
+            return res.status(400).json({ msg: 'Пользователь с таким E-mail или телефоном уже существует' });
         }
 
-        // Create new user instance
-        user = new User({
-            username,
-            password,
-            role
-        });
-
-        // Encrypt password
+        user = new User({ name, emailOrPhone, password, role: 'author' });
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
-
-        // Save user to DB
         await user.save();
 
-        // Create and return JWT
-        const payload = {
-            user: {
-                id: user.id,
-                role: user.role
+        const payload = { user: { id: user.id, role: user.role, name: user.name } };
+        jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 3600 }, (err, token) => {
+            if (err) {
+                console.error('JWT Signing Error:', err);
+                return res.status(500).json({ msg: 'Ошибка при создании токена' });
             }
-        };
-
-        jwt.sign(
-            payload,
-            config.get('jwtSecret'),
-            { expiresIn: 3600 }, // Expires in 1 hour
-            (err, token) => {
-                if (err) throw err;
-                res.json({ token });
-            }
-        );
-
+            res.json({ token, role: user.role });
+        });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+        console.error('CONTROLLER_ERROR:', err);
+        res.status(500).json({ msg: 'Ошибка на сервере' });
     }
 };
 
@@ -58,43 +46,31 @@ exports.register = async (req, res) => {
 // @desc    Login user & get token
 // @access  Public
 exports.login = async (req, res) => {
-    const { username, password } = req.body;
-
+    const { emailOrPhone, password } = req.body;
     try {
-        // Check if user exists
-        let user = await User.findOne({ username });
-        if (!user) {
-            return res.status(400).json({ msg: 'Invalid credentials' });
-        }
+        // Find user by either email/phone or name
+        let user = await User.findOne({
+            $or: [
+                { emailOrPhone: emailOrPhone },
+                { name: emailOrPhone }
+            ]
+        });
+        if (!user) return res.status(400).json({ msg: 'Неверные учетные данные' });
 
-        // Check password
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ msg: 'Invalid credentials' });
-        }
+        if (!isMatch) return res.status(400).json({ msg: 'Неверные учетные данные' });
 
-        // Create and return JWT
-        const payload = {
-            user: {
-                id: user.id,
-                role: user.role,
-                username: user.username
+        const payload = { user: { id: user.id, role: user.role, name: user.name } };
+        jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 3600 }, (err, token) => {
+            if (err) {
+                console.error('JWT Signing Error:', err);
+                return res.status(500).json({ msg: 'Ошибка при создании токена' });
             }
-        };
-
-        jwt.sign(
-            payload,
-            config.get('jwtSecret'),
-            { expiresIn: 3600 }, // Expires in 1 hour
-            (err, token) => {
-                if (err) throw err;
-                res.json({ token });
-            }
-        );
-
+            res.json({ token, role: user.role });
+        });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+        console.error('CONTROLLER_ERROR:', err);
+        res.status(500).json({ msg: 'Ошибка на сервере' });
     }
 };
 
@@ -103,10 +79,77 @@ exports.login = async (req, res) => {
 // @access  Public
 exports.getUsers = async (req, res) => {
     try {
-        const users = await User.find().select('-password').sort({ username: 1 });
+        const users = await User.find().select('-password').sort({ name: 1 });
         res.json(users);
     } catch (err) {
+        console.error('CONTROLLER_ERROR:', err);
+        res.status(500).json({ msg: 'Ошибка на сервере' });
+    }
+};
+
+// @route   POST api/users/forgot-password
+// @desc    Forgot password - generate token
+// @access  Public
+exports.forgotPassword = async (req, res) => {
+    const { emailOrPhone } = req.body;
+    try {
+        const user = await User.findOne({ emailOrPhone });
+        if (!user) {
+            return res.json({ msg: 'Если такой пользователь существует, на его адрес отправлены инструкции по восстановлению.' });
+        }
+
+        const resetToken = crypto.randomBytes(20).toString('hex');
+        user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+        await user.save();
+
+        const resetUrl = `${req.protocol}://${req.get('host')}/reset-password.html?token=${resetToken}`;
+        console.log('Ссылка для сброса пароля:', resetUrl);
+
+        res.json({ msg: 'Если такой пользователь существует, на его адрес отправлены инструкции по восстановлению.' });
+    } catch (err) {
+        console.error('FORGOT_PASSWORD_ERROR:', err);
+        res.status(500).json({ msg: 'Ошибка на сервере' });
+    }
+};
+
+// @route   POST api/users/reset-password/:token
+// @desc    Reset password using token
+// @access  Public
+exports.resetPassword = async (req, res) => {
+    const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    try {
+        const user = await User.findOne({
+            resetPasswordToken,
+            resetPasswordExpires: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ msg: 'Токен недействителен или срок его действия истек.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(req.body.password, salt);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        res.json({ msg: 'Пароль успешно обновлен.' });
+    } catch (err) {
+        console.error('RESET_PASSWORD_ERROR:', err);
+        res.status(500).json({ msg: 'Ошибка на сервере' });
+    }
+};
+
+// @desc    Get all users with role 'author'
+// @access  Public
+exports.getAuthors = async (req, res) => {
+    try {
+        // Find users with the role 'author', select only their names, and limit to 10
+                const authors = await User.find({ role: { $in: ['author', 'admin'] } }).select('name -_id').limit(10);
+        res.json(authors);
+    } catch (err) {
         console.error(err.message);
-        res.status(500).send('Server error');
+        res.status(500).send('Ошибка сервера');
     }
 };

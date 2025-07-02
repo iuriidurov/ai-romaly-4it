@@ -30,12 +30,14 @@ mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
         // Create admin user on startup if not exists
         const createAdminUser = async () => {
             try {
-                const adminExists = await User.findOne({ username: 'iuriidurov' });
+                const adminIdentifier = 'iuriidurov@mail.ru'; // Using an email for the admin
+                const adminExists = await User.findOne({ emailOrPhone: adminIdentifier });
                 if (!adminExists) {
                     console.log('Admin user not found, creating one...');
                     const hashedPassword = await bcrypt.hash('admin', 10);
                     const admin = new User({
-                        username: 'iuriidurov',
+                        name: 'iuriidurov', // Admin's name
+                        emailOrPhone: adminIdentifier, // Admin's login
                         password: hashedPassword,
                         role: 'admin'
                     });

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>АІ-РОМАЛЫ - Музыкальная нейроколлекция</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <header>
@@ -84,18 +84,47 @@
             <div id="login-form-container">
                 <h2>Вход в кабинет</h2>
                 <form id="login-form">
-                    <input type="text" name="username" placeholder="Логин" required>
-                    <input type="password" name="password" placeholder="Пароль" required>
+                    <div class="input-group">
+                        <input type="text" name="emailOrPhone" placeholder="Email или телефон" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" name="password" id="login-password" placeholder="Пароль" required>
+                        <span class="toggle-password" data-target="login-password"><i class="far fa-eye"></i></span>
+                    </div>
                     <button type="submit">Войти</button>
                     <p>Нет аккаунта? <a href="#" id="show-register">Зарегистрироваться</a></p>
+                    <p style="text-align: center; margin-top: 10px;"><a href="#" id="show-forgot-password">Забыли пароль?</a></p>
+                </form>
+            </div>
+            <div id="forgot-password-form-container" style="display:none;">
+                <h2>Восстановление пароля</h2>
+                <form id="forgot-password-form">
+                    <p style="text-align: center; margin-bottom: 15px;">Введите ваш Email или телефон, и мы вышлем вам инструкции.</p>
+                    <div class="input-group">
+                        <input type="text" name="emailOrPhone" placeholder="Email или телефон" required>
+                    </div>
+                    <button type="submit">Отправить</button>
+                    <p style="text-align: center; margin-top: 10px;"><a href="#" id="back-to-login">Вернуться ко входу</a></p>
                 </form>
             </div>
             <div id="register-form-container" style="display:none;">
-                <h2>Регистрация автора</h2>
+                <h2>РЕГИСТРАЦИЯ</h2>
                 <form id="register-form">
-                    <input type="text" name="username" placeholder="Придумайте логин" required>
-                    <input type="password" name="password" placeholder="Придумайте пароль" required>
-                    <button type="submit">Зарегистрироваться</button>
+                    <div class="input-group">
+                        <input type="text" name="name" placeholder="Ваше имя" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" name="emailOrPhone" placeholder="Email или телефон" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" name="password" id="register-password" placeholder="Пароль" required>
+                        <span class="toggle-password" data-target="register-password"><i class="far fa-eye"></i></span>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" name="password2" id="register-password2" placeholder="Повторите пароль" required>
+                        <span class="toggle-password" data-target="register-password2"><i class="far fa-eye"></i></span>
+                    </div>
+                    <button type="submit">Создать аккаунт</button>
                     <p>Уже есть аккаунт? <a href="#" id="show-login">Войти</a></p>
                 </form>
             </div>

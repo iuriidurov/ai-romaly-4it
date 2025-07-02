@@ -9,6 +9,30 @@ function parseJwt(token) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const trackList = document.querySelector('.track-list');
+    const collectionsList = document.querySelector('.left-column ul');
+
+    // Function to fetch and display collections in the left menu
+    const loadCollectionsMenu = async () => {
+        try {
+            const response = await fetch('/api/tracks/collections');
+            if (!response.ok) throw new Error('Не удалось загрузить список сборников');
+            const collections = await response.json();
+            
+            if (collections.length > 0) {
+                collectionsList.innerHTML = ''; // Clear hardcoded list only if fetch is successful
+            }
+            
+            collections.forEach(collectionName => {
+                const listItem = document.createElement('li');
+                // In the future, the link can filter tracks by collection
+                listItem.innerHTML = `<a href="#">${collectionName}</a>`;
+                collectionsList.appendChild(listItem);
+            });
+        } catch (error) {
+            console.error('Ошибка при загрузке меню сборников:', error);
+            // If fetch fails, the hardcoded list in HTML will be used as a fallback.
+        }
+    };
 
     // Function to fetch and display tracks
     const loadTracks = async () => {
@@ -32,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 trackItem.className = 'track-item';
 
                 // Defensive checks for author
-                const authorName = track.author ? track.author.username : 'Неизвестный автор';
+                const authorName = track.author ? track.author.name : 'Неизвестный автор';
                 const canDelete = currentUser && track.author && (currentUser.id === track.author._id || currentUser.role === 'admin');
                 const deleteButtonHTML = canDelete ? `<a href="#" title="Удалить" class="delete-btn" data-id="${track._id}"><i class="fa fa-trash"></i></a>` : '';
 
@@ -56,6 +80,33 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error loading tracks:', error);
             trackList.innerHTML = '<p>Не удалось загрузить треки. Попробуйте позже.</p>';
+        }
+    };
+
+    const loadTopAuthors = async () => {
+        const authorsList = document.querySelector('.top-authors ul');
+        if (!authorsList) return; // Guard clause if element doesn't exist
+
+        try {
+            const response = await fetch('/api/users/authors');
+            if (!response.ok) throw new Error('Не удалось загрузить список авторов');
+            const authors = await response.json();
+
+            authorsList.innerHTML = ''; // Clear static/old list
+
+            if (authors.length === 0) {
+                authorsList.innerHTML = '<li>Авторов пока нет.</li>';
+                return;
+            }
+
+            authors.forEach(author => {
+                const listItem = document.createElement('li');
+                listItem.textContent = author.name;
+                authorsList.appendChild(listItem);
+            });
+        } catch (error) {
+            console.error('Ошибка при загрузке списка авторов:', error);
+            // Keep the static list as a fallback
         }
     };
 
@@ -93,12 +144,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (confirm('Вы уверены, что хотите удалить этот трек?')) {
                 try {
                     const token = localStorage.getItem('token');
-                    const res = await fetch(`/api/tracks/${trackId}`, {
+                    const response = await fetch(`/api/tracks/${trackId}`, {
                         method: 'DELETE',
-                        headers: { 'x-auth-token': token }
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
                     });
-                    if (!res.ok) {
-                        const result = await res.json();
+                    if (!response.ok) {
+                        const result = await response.json();
                         throw new Error(result.msg || 'Не удалось удалить трек.');
                     }
                     deleteBtn.closest('.track-item').remove();
@@ -132,16 +185,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutBtn = document.getElementById('logout-btn');
     const loginFormContainer = document.getElementById('login-form-container');
     const registerFormContainer = document.getElementById('register-form-container');
+    const forgotPasswordFormContainer = document.getElementById('forgot-password-form-container');
     const showRegisterLink = document.getElementById('show-register');
     const showLoginLink = document.getElementById('show-login');
+    const showForgotPasswordLink = document.getElementById('show-forgot-password');
+    const backToLoginLink = document.getElementById('back-to-login');
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
+    const forgotPasswordForm = document.getElementById('forgot-password-form');
 
     // Show modal
     loginBtn.addEventListener('click', (e) => {
         e.preventDefault();
         authModal.style.display = 'block';
-        showLoginForm();
+        showLoginForm(); // Ensure login form is shown by default
     });
 
     logoutBtn.addEventListener('click', (e) => {
@@ -159,17 +216,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Switch forms
-    showRegisterLink.addEventListener('click', (e) => {
-        e.preventDefault();
+    const showLoginForm = () => {
+        loginFormContainer.style.display = 'block';
+        registerFormContainer.style.display = 'none';
+        forgotPasswordFormContainer.style.display = 'none';
+    };
+
+    const showRegisterForm = () => {
         loginFormContainer.style.display = 'none';
         registerFormContainer.style.display = 'block';
+        forgotPasswordFormContainer.style.display = 'none';
+    };
+
+    const showForgotPasswordForm = () => {
+        loginFormContainer.style.display = 'none';
+        registerFormContainer.style.display = 'none';
+        forgotPasswordFormContainer.style.display = 'block';
+    };
+
+    showRegisterLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        showRegisterForm();
     });
 
     showLoginLink.addEventListener('click', (e) => {
         e.preventDefault();
-        registerFormContainer.style.display = 'none';
-        loginFormContainer.style.display = 'block';
+        showLoginForm();
+    });
+
+    showForgotPasswordLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        showForgotPasswordForm();
+    });
+
+    backToLoginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        showLoginForm();
     });
 
     // Login form submission
@@ -185,11 +267,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(data)
             });
             const result = await res.json();
-            if (!res.ok) throw new Error(result.msg || 'Login failed');
+            if (!res.ok) throw new Error(result.msg || 'Ошибка входа');
 
             localStorage.setItem('token', result.token);
-            authModal.style.display = 'none';
-            updateUIForAuthState();
+
+            // Check user role and redirect if admin or author
+            if (result.role === 'admin' || result.role === 'author') {
+                window.location.href = '/author.html';
+            } else {
+                authModal.style.display = 'none';
+                updateUIForAuthState();
+                window.location.reload(); // Reload for other roles or if role is not returned
+            }
         } catch (err) {
             alert(err.message);
         }
@@ -201,6 +290,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(registerForm);
         const data = Object.fromEntries(formData.entries());
 
+        if (data.password !== data.password2) {
+            alert('Пароли не совпадают');
+            return;
+        }
+
         try {
             const res = await fetch('/api/users/register', {
                 method: 'POST',
@@ -208,15 +302,64 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(data)
             });
             const result = await res.json();
-            if (!res.ok) throw new Error(result.msg || 'Registration failed');
+            if (!res.ok) throw new Error(result.msg || 'Ошибка регистрации');
 
+            // Automatically log in the user and redirect
             localStorage.setItem('token', result.token);
-            alert('Регистрация прошла успешно!');
-            authModal.style.display = 'none';
-            updateUIForAuthState();
+
+            if (result.role === 'author') {
+                window.location.href = '/author.html';
+            } else {
+                authModal.style.display = 'none';
+                updateUIForAuthState();
+                window.location.reload();
+            }
         } catch (err) {
             alert(err.message);
         }
+    });
+
+    // Forgot password form submission
+    if (forgotPasswordForm) {
+        forgotPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(forgotPasswordForm);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const res = await fetch('/api/users/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.msg || 'Ошибка при отправке запроса');
+                
+                alert('Если пользователь с таким Email или телефоном существует, мы выслали инструкции по восстановлению на указанный адрес.');
+                showLoginForm(); // Go back to login form
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+    }
+
+    // Password visibility toggle
+    document.querySelectorAll('.toggle-password').forEach(item => {
+        item.addEventListener('click', e => {
+            const targetId = e.currentTarget.dataset.target;
+            const passwordInput = document.getElementById(targetId);
+            const icon = e.currentTarget.querySelector('i');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
     });
 
     // Function to update UI based on auth state
@@ -227,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const decodedToken = parseJwt(token);
                 if (decodedToken && decodedToken.user) {
                     const user = decodedToken.user;
-                    usernameDisplay.textContent = user.username;
+                    usernameDisplay.textContent = user.name;
                     userRoleDisplay.textContent = user.role;
 
                     cabinetLink.style.display = 'inline';
@@ -250,6 +393,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Check auth state on page load
+    // Initial data loading on page load
+    loadCollectionsMenu();
+    loadTracks();
+    loadTopAuthors();
     updateUIForAuthState();
 });

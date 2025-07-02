@@ -3,17 +3,23 @@ const config = require('config');
 
 module.exports = function(req, res, next) {
     // Get token from header
-    const token = req.header('x-auth-token');
+    const authHeader = req.header('Authorization');
 
-    // Check if not token
-    if (!token) {
-        return res.status(401).json({ msg: 'No token, authorization denied' });
+    // Check if token exists and has the correct format ('Bearer <token>')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ msg: 'Authorization denied, token missing or malformed' });
     }
 
-    // Verify token
     try {
+        // Get token from header by removing 'Bearer ' prefix
+        const token = authHeader.substring(7);
+        
+        // Verify token
         const decoded = jwt.verify(token, config.get('jwtSecret'));
+        
+        // Add user from payload to request object
         req.user = decoded.user;
+        
         next();
     } catch (err) {
         res.status(401).json({ msg: 'Token is not valid' });
