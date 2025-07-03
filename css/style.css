@@ -168,6 +168,53 @@ aside ul li a:hover {
     background-color: #ddd;
 }
 
+/* --- Collection Page Header --- */
+.collection-header {
+    display: flex;
+    align-items: flex-start; /* Align items to the top */
+    gap: 25px; /* Space between cover and info */
+    margin-bottom: 30px;
+}
+
+.collection-cover {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 12px;
+    flex-shrink: 0; /* Prevent image from shrinking */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.collection-info {
+    flex-grow: 1;
+}
+
+.collection-info .collection-tag {
+    font-size: 0.8em;
+    font-weight: bold;
+    color: #6c757d;
+    text-transform: uppercase;
+    margin: 0 0 5px 0;
+    letter-spacing: 0.5px;
+}
+
+.collection-info h2 {
+    margin: 0 0 10px 0;
+    font-size: 2.2em;
+    font-weight: 700;
+}
+
+.collection-info p {
+    margin: 0 0 20px 0;
+    color: #495057;
+    line-height: 1.6;
+}
+
+.collection-actions {
+    display: flex;
+    gap: 10px;
+}
+
 /* --- Upload Form & Modal (New Light Style) --- */
 .modal-content {
     background-color: #ffffff;

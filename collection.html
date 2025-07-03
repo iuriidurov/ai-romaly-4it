@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сборник - AI-Ромалы</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1><a href="/">AI-РОМАЛЫ</a></h1>
+            <p>Музыкальная нейроколлекция</p>
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="Поиск музыки...">
+            <button><i class="fa fa-search"></i></button>
+        </div>
+        <div class="user-panel">
+            <a id="cabinet-link" href="/author.html" class="user-info-link" style="display: none;">
+                <span id="username-display"></span> (<span id="user-role-display"></span>)
+            </a>
+            <a href="#" id="logout-btn" class="auth-btn" style="display: none;">ВЫЙТИ</a>
+            <a href="#" id="login-btn" class="auth-btn">ВОЙТИ В КАБИНЕТ</a>
+        </div>
+    </header>
+
+    <div class="container author-container">
+        <aside class="left-column">
+            <h3>Сборники треков</h3>
+            <ul id="collections-list" class="collections-list">
+                <!-- Collections list will be loaded here by JavaScript -->
+            </ul>
+        </aside>
+
+        <main class="center-column" id="collection-detail-container">
+            <!-- Collection details will be loaded here -->
+        </main>
+
+        <aside class="right-column">
+            <h3>Рекомендуем</h3>
+            <!-- Recommended content can be added here -->
+            
+            <h3>Топ лучших авторов</h3>
+            <ul id="top-authors-list" class="authors-list">
+                <li>Загрузка...</li>
+            </ul>
+
+            <h3>Все авторы</h3>
+            <ul id="all-authors-list" class="authors-list">
+                <li>Загрузка...</li>
+            </ul>
+        </aside>
+    </div>
+
+    <audio id="audio-player" controls style="width: 100%; position: fixed; bottom: 0; left: 0;"></audio>
+
+    <script src="/js/collection.js"></script>
+</body>
+</html>
