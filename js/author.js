@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="track-info">
                         <span class="track-title">${escapeHTML(track.title)}</span>
-                        <span class="track-collection">${track.collectionId ? escapeHTML(track.collectionId.name) : 'Без сборника'}</span>
+                        <span class="track-author">${track.author ? escapeHTML(track.author.name) : 'Неизвестный автор'}</span>
                     </div>
                     <div class="track-status">
                         ${statusLabel}
@@ -187,34 +187,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadForm = document.getElementById('upload-track-form');
     const closeBtn = uploadModal.querySelector('.close-btn');
     const titleInput = document.getElementById('upload-title');
-    const collectionSelect = document.getElementById('upload-collection');
     const fileInput = document.getElementById('track-file');
     const progressBarContainer = uploadModal.querySelector('.progress-container');
     const progressBarInner = uploadModal.querySelector('.progress-bar-inner');
     const statusMessage = document.getElementById('upload-status-message');
     const submitBtn = uploadForm.querySelector('.btn-submit');
 
-    async function loadCollections() {
-        try {
-            const response = await fetch('/api/collections', { headers: { 'Authorization': `Bearer ${token}` } });
-            if (!response.ok) throw new Error('Не удалось загрузить сборники');
-            const collections = await response.json();
-            collectionSelect.innerHTML = '<option value="">Выберите сборник</option>';
-            collections.forEach(collection => {
-                const option = document.createElement('option');
-                option.value = collection._id;
-                option.textContent = escapeHTML(collection.name);
-                collectionSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading collections:', error);
-            collectionSelect.innerHTML = `<option value="">${error.message}</option>`;
-        }
-    }
+
 
     async function showUploadModal() {
         resetUploadForm();
-        await loadCollections();
+
         uploadModal.style.display = 'block';
 
         const token = localStorage.getItem('token');
@@ -280,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const formData = new FormData();
         formData.append('title', titleInput.value);
-        formData.append('collectionId', collectionSelect.value);
+
         formData.append('trackFile', fileInput.files[0]);
 
         progressBarContainer.style.display = 'block';
@@ -330,10 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('upload-author').value = '';
         document.getElementById('upload-title').value = '';
         document.getElementById('track-file').value = '';
-        const collectionSelect = document.getElementById('upload-collection');
-        if (collectionSelect) {
-            collectionSelect.selectedIndex = 0;
-        }
+
 
         progressBarContainer.style.display = 'none';
         progressBarInner.style.width = '0%';
@@ -350,7 +330,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function escapeHTML(str) {
-        return str.replace(/[&<>'"/]/g, tag => ({
+        if (str === null || str === undefined) {
+            return '';
+        }
+        return String(str).replace(/[&<>'"/]/g, tag => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;',
             "'": '&#39;', '"': '&quot;', '/': '&#x2F;'
         }[tag] || tag));

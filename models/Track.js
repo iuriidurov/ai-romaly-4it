@@ -11,11 +11,6 @@ const TrackSchema = new Schema({
         ref: 'User',
         required: true
     },
-    collectionId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Collection',
-        required: false
-    },
     status: {
         type: String,
         enum: ['pending', 'approved', 'rejected'],

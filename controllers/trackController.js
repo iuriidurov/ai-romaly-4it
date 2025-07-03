@@ -9,7 +9,7 @@ const path = require('path');
 exports.getTracks = async (req, res) => {
     try {
         // Только одобренные треки для главной страницы
-        const tracks = await Track.find({ status: 'approved' }).populate('author', 'name _id').populate('collectionId', 'name').sort({ createdAt: -1 });
+        const tracks = await Track.find({ status: 'approved' }).populate('author', 'name _id').sort({ createdAt: -1 });
         res.json(tracks);
     } catch (err) {
         console.error(err.message);
@@ -22,7 +22,7 @@ exports.getTracks = async (req, res) => {
 // @access  Private
 exports.uploadTrack = async (req, res) => {
     try {
-        const { title, collectionId } = req.body; // Используем collectionId
+        const { title } = req.body;
 
         if (!req.file) {
             return res.status(400).json({ message: 'Файл не был загружен.' });
@@ -30,7 +30,7 @@ exports.uploadTrack = async (req, res) => {
 
         const newTrack = new Track({
             title,
-            collectionId: collectionId || null,
+
             filePath: req.file.path.replace(/\\/g, "/"),
             author: req.user.id
             // Статус по умолчанию 'pending' из модели

@@ -57,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="play-btn" data-src="/${track.filePath}"><i class="fa fa-play"></i></button>
                     </div>
                     <div class="track-info">
-                        <p class="track-title">${track.title}</p>
-                        <p class="track-author">${authorName} / ${collectionName}</p>
+                        <span class="track-title">${track.title}</span>
+                        <span class="track-author">${authorName}</span>
                     </div>
                     <div class="track-actions">
                         <a href="#" title="Поделиться"><i class="fa fa-share-alt"></i></a>

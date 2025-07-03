@@ -91,9 +91,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             trackItem.innerHTML = `
                 <div class="track-info">
-                    <div class="track-title">${escapeHTML(track.title)}</div>
+                    <span class="track-title">${escapeHTML(track.title)}</span>
+                    <span class="track-author">${track.author ? escapeHTML(track.author.name) : 'Неизвестный автор'}</span>
                 </div>
-                <div class="track-author">${track.author ? escapeHTML(track.author.name) : 'Неизвестный автор'}</div>
                 <div class="track-actions">
                     <button class="btn btn-approve" data-id="${track._id}">Одобрить</button>
                     <button class="btn btn-reject" data-id="${track._id}">Отклонить</button>
