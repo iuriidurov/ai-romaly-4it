@@ -29,19 +29,9 @@
     <main class="container">
         <aside class="left-column">
             <h2>Сборники треков</h2>
-            <ul>
-                <li><a href="#">Каверы известных песен</a></li>
-                <li><a href="#">Извинение после ссоры</a></li>
-                <li><a href="#">Признание в любви</a></li>
-                <li><a href="#">Предложение руки и сердца</a></li>
-                <li><a href="#">Свадебный подарок от друзей</a></li>
-                <li><a href="#">Годовщина отношений</a></li>
-                <li><a href="#">На день рождения/юбилей</a></li>
-                <li><a href="#">Для ребёнка от родителей</a></li>
-                <li><a href="#">Для друзей</a></li>
-                <li><a href="#">Ребёнку на выступление</a></li>
-                <li><a href="#">Прощание (переезд, утрата)</a></li>
-                <li><a href="#">Для коллег по работе, начальнику</a></li>
+            <button id="create-collection-btn" class="admin-btn" style="display: none;">Создать сборник</button>
+            <ul id="collections-list" class="collections-list">
+                <!-- Сборники будут загружены здесь -->
             </ul>
         </aside>
 
@@ -77,6 +67,27 @@
     <script src="/js/utils.js"></script>
     <script src="/js/main.js"></script>
     <audio id="audio-player"></audio>
+
+    <!-- Create Collection Modal -->
+    <div id="create-collection-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Создать новый сборник</h2>
+            <form id="create-collection-form">
+                <div class="input-group">
+                    <input type="text" name="name" placeholder="Название сборника" required>
+                </div>
+                <div class="input-group">
+                    <textarea name="description" placeholder="Описание сборника"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="cover-image">Обложка сборника:</label>
+                    <input type="file" name="coverImage" id="cover-image" accept="image/*">
+                </div>
+                <button type="submit">Создать</button>
+            </form>
+        </div>
+    </div>
 
     <!-- Login/Register Modal -->
     <div id="auth-modal" class="modal">

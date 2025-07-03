@@ -1,29 +1,52 @@
+function parseJwt(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        console.error("Invalid token:", e);
+        return null;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const trackList = document.querySelector('.track-list');
     const collectionsList = document.querySelector('.left-column ul');
 
     // Function to fetch and display collections in the left menu
     const loadCollectionsMenu = async () => {
+        const collectionsList = document.getElementById('collections-list');
+        if (!collectionsList) return; // Exit if the element doesn't exist
+
         try {
-            const response = await fetch('/api/tracks/collections');
+            const response = await fetch('/api/collections');
             if (!response.ok) throw new Error('Не удалось загрузить список сборников');
             const collections = await response.json();
             
-            if (collections.length > 0) {
-                collectionsList.innerHTML = ''; // Clear hardcoded list only if fetch is successful
-            }
+            collectionsList.innerHTML = ''; // Clear previous list
             
-            collections.forEach(collectionName => {
+            collections.forEach(collection => {
                 const listItem = document.createElement('li');
-                // In the future, the link can filter tracks by collection
-                listItem.innerHTML = `<a href="#">${collectionName}</a>`;
+                listItem.innerHTML = `<a href="/collection.html?id=${collection._id}">${escapeHTML(collection.name)}</a>`;
                 collectionsList.appendChild(listItem);
             });
         } catch (error) {
             console.error('Ошибка при загрузке меню сборников:', error);
-            // If fetch fails, the hardcoded list in HTML will be used as a fallback.
+            if(collectionsList) collectionsList.innerHTML = '<li>Ошибка загрузки</li>';
         }
     };
+
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"'/]/g, tag => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;',
+            "'": '&#39;', '"': '&quot;', '/': '&#x2F;'
+        }[tag] || tag));
+    }
 
     // Function to fetch and display tracks
     const loadTracks = async () => {
@@ -166,10 +189,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial load
     loadTracks();
+    loadCollectionsMenu();
 
     // --- Auth Modal Logic ---
     const authModal = document.getElementById('auth-modal');
-    const closeModalBtn = document.querySelector('.close-btn');
+    const authModalCloseBtn = authModal.querySelector('.close-btn');
     const cabinetLink = document.getElementById('cabinet-link');
     const usernameDisplay = document.getElementById('username-display');
     const userRoleDisplay = document.getElementById('user-role-display');
@@ -186,22 +210,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerForm = document.getElementById('register-form');
     const forgotPasswordForm = document.getElementById('forgot-password-form');
 
-    // Show modal
+    // --- Create Collection Modal Elements ---
+    const createCollectionBtn = document.getElementById('create-collection-btn');
+    const createCollectionModal = document.getElementById('create-collection-modal');
+    const createCollectionForm = document.getElementById('create-collection-form');
+    const closeCreateCollectionModalBtn = createCollectionModal ? createCollectionModal.querySelector('.close-btn') : null;
+
+    // Show auth modal
     loginBtn.addEventListener('click', (e) => {
         e.preventDefault();
         authModal.style.display = 'block';
-        showLoginForm(); // Ensure login form is shown by default
+        showLoginForm();
     });
 
     logoutBtn.addEventListener('click', (e) => {
         e.preventDefault();
         localStorage.removeItem('token');
         updateUIForAuthState();
-        loadTracks(); // Reload tracks to update view for logged-out state
+        loadTracks();
     });
 
-    // Hide modal
-    closeModalBtn.addEventListener('click', () => authModal.style.display = 'none');
+    // Hide auth modal
+    authModalCloseBtn.addEventListener('click', () => authModal.style.display = 'none');
     window.addEventListener('click', (e) => {
         if (e.target == authModal) {
             authModal.style.display = 'none';
@@ -226,32 +256,16 @@ document.addEventListener('DOMContentLoaded', () => {
         forgotPasswordFormContainer.style.display = 'block';
     };
 
-    showRegisterLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showRegisterForm();
-    });
-
-    showLoginLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showLoginForm();
-    });
-
-    showForgotPasswordLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showForgotPasswordForm();
-    });
-
-    backToLoginLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showLoginForm();
-    });
+    showRegisterLink.addEventListener('click', (e) => { e.preventDefault(); showRegisterForm(); });
+    showLoginLink.addEventListener('click', (e) => { e.preventDefault(); showLoginForm(); });
+    showForgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); showForgotPasswordForm(); });
+    backToLoginLink.addEventListener('click', (e) => { e.preventDefault(); showLoginForm(); });
 
     // Login form submission
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(loginForm);
         const data = Object.fromEntries(formData.entries());
-
         try {
             const res = await fetch('/api/users/login', {
                 method: 'POST',
@@ -260,16 +274,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.msg || 'Ошибка входа');
-
             localStorage.setItem('token', result.token);
-
-            // Check user role and redirect if admin or author
             if (result.role === 'admin' || result.role === 'author') {
                 window.location.href = '/author.html';
             } else {
                 authModal.style.display = 'none';
                 updateUIForAuthState();
-                window.location.reload(); // Reload for other roles or if role is not returned
+                window.location.reload();
             }
         } catch (err) {
             alert(err.message);
@@ -281,12 +292,10 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const formData = new FormData(registerForm);
         const data = Object.fromEntries(formData.entries());
-
         if (data.password !== data.password2) {
             alert('Пароли не совпадают');
             return;
         }
-
         try {
             const res = await fetch('/api/users/register', {
                 method: 'POST',
@@ -295,10 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.msg || 'Ошибка регистрации');
-
-            // Automatically log in the user and redirect
             localStorage.setItem('token', result.token);
-
             if (result.role === 'author') {
                 window.location.href = '/author.html';
             } else {
@@ -317,7 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const formData = new FormData(forgotPasswordForm);
             const data = Object.fromEntries(formData.entries());
-
             try {
                 const res = await fetch('/api/users/forgot-password', {
                     method: 'POST',
@@ -326,11 +331,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const result = await res.json();
                 if (!res.ok) throw new Error(result.msg || 'Ошибка при отправке запроса');
-                
                 alert('Если пользователь с таким Email или телефоном существует, мы выслали инструкции по восстановлению на указанный адрес.');
-                showLoginForm(); // Go back to login form
+                showLoginForm();
             } catch (err) {
                 alert(err.message);
+            }
+        });
+    }
+
+    // --- Create Collection Modal Logic ---
+    if (createCollectionBtn && createCollectionModal && createCollectionForm && closeCreateCollectionModalBtn) {
+        createCollectionBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            createCollectionModal.style.display = 'block';
+        });
+
+        closeCreateCollectionModalBtn.addEventListener('click', () => {
+            createCollectionModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target == createCollectionModal) {
+                createCollectionModal.style.display = 'none';
+            }
+        });
+
+        createCollectionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Необходима авторизация.');
+                return;
+            }
+
+            const formData = new FormData(createCollectionForm);
+
+            try {
+                const response = await fetch('/api/collections', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.msg || 'Не удалось создать сборник.');
+                }
+
+                alert('Сборник успешно создан!');
+                createCollectionModal.style.display = 'none';
+                createCollectionForm.reset();
+                loadCollectionsMenu(); // Refresh the collections list
+
+            } catch (error) {
+                console.error('Ошибка при создании сборника:', error);
+                alert(error.message);
             }
         });
     }
@@ -368,20 +425,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     cabinetLink.style.display = 'inline';
                     logoutBtn.style.display = 'inline-block';
                     loginBtn.style.display = 'none';
+
+                    if (createCollectionBtn) {
+                        createCollectionBtn.style.display = user.role === 'admin' ? 'block' : 'none';
+                    }
                 } else {
                     throw new Error('Invalid token structure');
                 }
             } catch (error) {
                 console.error('Failed to parse token or update UI:', error);
-                localStorage.removeItem('token'); // Clear invalid token
+                localStorage.removeItem('token');
                 cabinetLink.style.display = 'none';
                 logoutBtn.style.display = 'none';
                 loginBtn.style.display = 'inline-block';
+                if (createCollectionBtn) createCollectionBtn.style.display = 'none';
             }
         } else {
             cabinetLink.style.display = 'none';
             logoutBtn.style.display = 'none';
             loginBtn.style.display = 'inline-block';
+            if (createCollectionBtn) createCollectionBtn.style.display = 'none';
         }
     };
 

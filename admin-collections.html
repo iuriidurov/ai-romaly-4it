@@ -58,7 +58,15 @@
                         <input type="hidden" id="collection-id">
                         <div class="form-group">
                             <label for="collection-name">Название сборника</label>
-                            <input type="text" id="collection-name" required>
+                            <input type="text" id="collection-name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="collection-description">Описание сборника</label>
+                            <textarea id="collection-description" name="description" rows="4"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="collection-cover">Обложка сборника</label>
+                            <input type="file" id="collection-cover" name="coverImage" accept="image/*">
                         </div>
                         <button type="submit" class="btn-submit">Сохранить</button>
                     </form>

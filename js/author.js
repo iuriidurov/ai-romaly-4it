@@ -330,17 +330,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function escapeHTML(str) {
-        if (str === null || str === undefined) {
-            return '';
-        }
-        return String(str).replace(/[&<>'"/]/g, tag => ({
+        if (!str) return '';
+        return str.replace(/[&<>"'/]/g, tag => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;',
             "'": '&#39;', '"': '&quot;', '/': '&#x2F;'
         }[tag] || tag));
     }
 
-    // --- Initial Load ---
+    async function loadCollectionsMenu() {
+        const collectionsList = document.getElementById('collections-list');
+        if (!collectionsList) return;
+
+        try {
+            const response = await fetch('/api/collections');
+            if (!response.ok) throw new Error('Не удалось загрузить список сборников');
+            const collections = await response.json();
+            
+            collectionsList.innerHTML = '';
+            
+            collections.forEach(collection => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `<a href="/collection.html?id=${collection._id}">${escapeHTML(collection.name)}</a>`;
+                collectionsList.appendChild(listItem);
+            });
+        } catch (error) {
+            console.error('Ошибка при загрузке меню сборников:', error);
+            if(collectionsList) collectionsList.innerHTML = '<li>Ошибка загрузки</li>';
+        }
+    }
+
+    // Initial Load
     updateHeaderUI();
     loadAuthors();
+    loadCollectionsMenu();
     loadAuthorTracks();
 });

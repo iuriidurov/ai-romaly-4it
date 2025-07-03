@@ -42,26 +42,26 @@ exports.getCollectionById = async (req, res) => {
 // @route   POST /api/collections
 // @access  Private/Admin
 exports.createCollection = async (req, res) => {
-    const { name, description, coverImagePath } = req.body;
+    const { name, description } = req.body;
 
     try {
-        // This check should be handled by middleware. I'll leave it for now and fix it later.
-        if (req.user.role !== 'admin') {
-             return res.status(403).json({ msg: 'Доступ запрещен' });
-        }
-
         let collection = await Collection.findOne({ name });
         if (collection) {
             return res.status(400).json({ msg: 'Сборник с таким названием уже существует' });
         }
 
-        collection = new Collection({
+        const newCollectionData = {
             name,
             description,
-            coverImagePath,
-            createdBy: req.user.id, // Get admin's ID from the token
-            tracks: [] // Starts empty
-        });
+            createdBy: req.user.id,
+            tracks: []
+        };
+
+        if (req.file) {
+            newCollectionData.coverImagePath = req.file.path;
+        }
+
+        collection = new Collection(newCollectionData);
 
         await collection.save();
         res.status(201).json(collection);
@@ -75,13 +75,9 @@ exports.createCollection = async (req, res) => {
 // @route   PUT /api/collections/:id
 // @access  Private/Admin
 exports.updateCollection = async (req, res) => {
-    const { name, description, coverImagePath } = req.body;
+    const { name, description } = req.body;
 
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ msg: 'Доступ запрещен' });
-        }
-
         let collection = await Collection.findById(req.params.id);
         if (!collection) {
             return res.status(404).json({ msg: 'Сборник не найден' });
@@ -90,7 +86,9 @@ exports.updateCollection = async (req, res) => {
         // Update fields if they are provided
         if (name) collection.name = name;
         if (description) collection.description = description;
-        if (coverImagePath) collection.coverImagePath = coverImagePath;
+        if (req.file) {
+            collection.coverImagePath = req.file.path;
+        }
 
         await collection.save();
 
