@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
 
-    // Helper to parse JWT
     const parseJwt = (token) => {
         try {
             return JSON.parse(atob(token.split('.')[1]));
@@ -11,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (!token) {
-        // If no token, redirect to homepage
         window.location.href = '/';
         return;
     }
@@ -24,35 +22,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const currentUser = decodedToken.user;
+    localStorage.setItem('user', JSON.stringify(currentUser));
 
-    // UI Elements
-    const usernameDisplay = document.getElementById('username-display');
-    const userRoleDisplay = document.getElementById('user-role-display');
-    const cabinetLink = document.getElementById('cabinet-link');
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
     const trackList = document.getElementById('author-track-list');
     const authorsList = document.getElementById('authors-list');
     const paginationContainer = document.querySelector('.pagination');
     const audioPlayer = document.getElementById('audio-player');
     let currentPlayingButton = null;
 
-    // --- UI Update Functions ---
     const updateHeaderUI = () => {
-        usernameDisplay.textContent = currentUser.name;
-        userRoleDisplay.textContent = currentUser.role;
-        cabinetLink.style.display = 'inline';
+        document.getElementById('username-display').textContent = currentUser.name;
+        document.getElementById('user-role-display').textContent = currentUser.role;
+        document.getElementById('cabinet-link').style.display = 'inline';
+        const logoutBtn = document.getElementById('logout-btn');
         logoutBtn.style.display = 'inline-block';
-        loginBtn.style.display = 'none';
+        document.getElementById('login-btn').style.display = 'none';
 
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.removeItem('token');
+            localStorage.removeItem('user');
             window.location.href = '/';
         });
     };
 
-    // --- Data Loading Functions ---
     const loadAuthors = async () => {
         try {
             const response = await fetch('/api/users');
@@ -61,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
             authorsList.innerHTML = '';
             users.forEach(user => {
                 const li = document.createElement('li');
-                li.innerHTML = `<a href="#">${user.name}</a>`; // Link can be implemented later
+                li.innerHTML = `<a href="#">${escapeHTML(user.name)}</a>`;
                 authorsList.appendChild(li);
             });
         } catch (error) {
@@ -73,8 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadAuthorTracks = async (page = 1) => {
         try {
             trackList.innerHTML = '<p>Загрузка ваших треков...</p>';
-            const response = await fetch(`/api/tracks/author/${currentUser.id}?page=${page}&limit=20`);
-            if (!response.ok) throw new Error('Failed to load tracks');
+            const response = await fetch(`/api/tracks/author/${currentUser.id}?page=${page}&limit=20`, { 
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Не удалось загрузить треки');
 
             const data = await response.json();
             const { tracks, totalPages, currentPage } = data;
@@ -82,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             trackList.innerHTML = '';
             if (tracks.length === 0) {
                 trackList.innerHTML = '<p>Вы еще не загрузили ни одного трека.</p>';
+                paginationContainer.innerHTML = '';
                 return;
             }
 
@@ -90,19 +86,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 trackItem.className = 'track-item';
                 const canDelete = currentUser && (currentUser.id === track.author._id || currentUser.role === 'admin');
                 const deleteButtonHTML = canDelete ? `<a href="#" title="Удалить" class="delete-btn" data-id="${track._id}"><i class="fa fa-trash"></i></a>` : '';
+                const statusLabel = getStatusLabel(track.status);
 
                 trackItem.innerHTML = `
                     <div class="track-play">
-                        <button class="play-btn" data-src="/${track.filePath}"><i class="fa fa-play"></i></button>
+                        <button class="play-btn" data-src="/${track.filePath}" ${track.status !== 'approved' ? 'disabled' : ''}><i class="fa fa-play"></i></button>
                     </div>
                     <div class="track-info">
-                        <p class="track-title">${track.title}</p>
-                        <p class="track-author">${currentUser.name} / ${track.collectionName || 'Без сборника'}</p>
+                        <span class="track-title">${escapeHTML(track.title)}</span>
+                        <span class="track-collection">${track.collectionId ? escapeHTML(track.collectionId.name) : 'Без сборника'}</span>
+                    </div>
+                    <div class="track-status">
+                        ${statusLabel}
                     </div>
                     <div class="track-actions">
-                        <a href="#" title="Поделиться"><i class="fa fa-share-alt"></i></a>
                         ${deleteButtonHTML}
-                        <a href="/${track.filePath}" title="Скачать" download><i class="fa fa-download"></i></a>
                     </div>
                 `;
                 trackList.appendChild(trackItem);
@@ -112,9 +110,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Error loading author tracks:', error);
-            trackList.innerHTML = '<p>Не удалось загрузить ваши треки.</p>';
+            trackList.innerHTML = `<p>${error.message}</p>`;
         }
     };
+
+    function getStatusLabel(status) {
+        switch (status) {
+            case 'pending':
+                return '<span class="status-label status-pending">На модерации</span>';
+            case 'approved':
+                return '<span class="status-label status-approved">Одобрено</span>';
+            case 'rejected':
+                return '<span class="status-label status-rejected">Отклонено</span>';
+            default:
+                return '';
+        }
+    }
 
     const renderPagination = (totalPages, currentPage) => {
         paginationContainer.innerHTML = '';
@@ -124,9 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const pageLink = document.createElement('a');
             pageLink.href = '#';
             pageLink.textContent = i;
-            if (i === currentPage) {
-                pageLink.classList.add('active');
-            }
+            if (i === currentPage) pageLink.className = 'active';
             pageLink.addEventListener('click', (e) => {
                 e.preventDefault();
                 loadAuthorTracks(i);
@@ -135,22 +144,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Event Listeners ---
     trackList.addEventListener('click', async (e) => {
-        const target = e.target;
-        const playBtn = target.closest('.play-btn');
-        const deleteBtn = target.closest('.delete-btn');
+        const playBtn = e.target.closest('.play-btn');
+        const deleteBtn = e.target.closest('.delete-btn');
 
         if (playBtn) {
+            e.preventDefault();
+            if (playBtn.hasAttribute('disabled')) return;
             const audioSrc = playBtn.dataset.src;
-            if (audioPlayer.src.endsWith(audioSrc) && !audioPlayer.paused) {
+            if (currentPlayingButton === playBtn) {
                 audioPlayer.pause();
                 playBtn.innerHTML = '<i class="fa fa-play"></i>';
                 currentPlayingButton = null;
             } else {
-                if (currentPlayingButton) {
-                    currentPlayingButton.innerHTML = '<i class="fa fa-play"></i>';
-                }
+                if (currentPlayingButton) currentPlayingButton.innerHTML = '<i class="fa fa-play"></i>';
                 audioPlayer.src = audioSrc;
                 audioPlayer.play();
                 playBtn.innerHTML = '<i class="fa fa-pause"></i>';
@@ -165,12 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         method: 'DELETE',
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
-                    if (!response.ok) throw new Error('Failed to delete track');
-                    // Reload tracks on the current page
-                    loadAuthorTracks(); 
+                    if (!response.ok) throw new Error('Не удалось удалить трек');
+                    loadAuthorTracks();
                 } catch (error) {
                     console.error('Error deleting track:', error);
-                    alert('Не удалось удалить трек.');
+                    alert(error.message);
                 }
             }
         }
@@ -183,11 +189,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- UPLOAD MODAL LOGIC ---
     const uploadModal = document.getElementById('upload-track-modal');
-    const closeBtn = uploadModal.querySelector('.close-btn');
     const uploadForm = document.getElementById('upload-track-form');
-    const authorInput = document.getElementById('upload-author');
+    const closeBtn = uploadModal.querySelector('.close-btn');
     const titleInput = document.getElementById('upload-title');
     const collectionSelect = document.getElementById('upload-collection');
     const fileInput = document.getElementById('track-file');
@@ -196,44 +200,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusMessage = document.getElementById('upload-status-message');
     const submitBtn = uploadForm.querySelector('.btn-submit');
 
-    const loadCollections = async () => {
+    async function loadCollections() {
         try {
-            const response = await fetch('/api/tracks/collections', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await fetch('/api/collections', { headers: { 'Authorization': `Bearer ${token}` } });
             if (!response.ok) throw new Error('Не удалось загрузить сборники');
             const collections = await response.json();
-            
-            collectionSelect.innerHTML = '';
-            if (collections.length === 0) {
+            collectionSelect.innerHTML = '<option value="">Выберите сборник</option>';
+            collections.forEach(collection => {
                 const option = document.createElement('option');
-                option.value = 'Мой первый сборник';
-                option.textContent = 'Мой первый сборник';
+                option.value = collection._id;
+                option.textContent = escapeHTML(collection.name);
                 collectionSelect.appendChild(option);
-            } else {
-                collections.forEach(name => {
-                    const option = document.createElement('option');
-                    option.value = name;
-                    option.textContent = name;
-                    collectionSelect.appendChild(option);
-                });
-            }
+            });
         } catch (error) {
-            console.error('Ошибка загрузки сборников:', error);
-            collectionSelect.innerHTML = '<option value="Основной">Основной</option>';
+            console.error('Error loading collections:', error);
+            collectionSelect.innerHTML = `<option value="">${error.message}</option>`;
         }
-    };
+    }
 
-    const showUploadModal = () => {
+    async function showUploadModal() {
         resetUploadForm();
-        loadCollections();
-                if (currentUser && currentUser.name) {
-            authorInput.value = currentUser.name;
-        }
+        await loadCollections();
         uploadModal.style.display = 'block';
-    };
 
-    const hideUploadModal = () => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            const payload = parseJwt(token);
+            if (payload && payload.user && payload.user.name) {
+                document.getElementById('upload-author').value = payload.user.name;
+                console.log('Author name set from token:', payload.user.name);
+            } else {
+                console.error('Could not set author name: user or name property missing in token payload.', payload);
+            }
+        } else {
+            console.error('Could not set author name: token not found.');
+        }
+    }
+
+    function hideUploadModal() {
         uploadModal.style.display = 'none';
     }
 
@@ -242,13 +246,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (currentUser.role === 'admin') {
         adminControls.style.display = 'flex';
-                document.getElementById('admin-authors-list-btn').addEventListener('click', () => {
-            window.location.href = '/admin-authors';
-        });
+        adminControls.innerHTML = `
+            <button class="btn" id="admin-moderation-btn">Треки на модерации</button>
+            <button class="btn" id="admin-authors-list-btn">Перейти к списку авторов</button>
+            <button class="btn" id="admin-upload-btn">Загрузить трек</button>
+            <button class="btn" id="admin-create-collection-btn">Создать новый сборник</button>
+        `;
+        document.getElementById('admin-moderation-btn').addEventListener('click', () => window.location.href = '/admin-moderation.html');
+        document.getElementById('admin-authors-list-btn').addEventListener('click', () => window.location.href = '/admin-authors.html');
         document.getElementById('admin-upload-btn').addEventListener('click', showUploadModal);
-        document.getElementById('admin-create-collection-btn').addEventListener('click', () => {
-            window.location.href = '/admin-collections';
-        });
+        document.getElementById('admin-create-collection-btn').addEventListener('click', () => window.location.href = '/admin-collections.html');
     } else if (currentUser.role === 'author') {
         authorUploadBtn.style.display = 'block';
         authorUploadBtn.addEventListener('click', showUploadModal);
@@ -264,21 +271,22 @@ document.addEventListener('DOMContentLoaded', () => {
     fileInput.addEventListener('change', () => {
         if (fileInput.files.length > 0) {
             const fileName = fileInput.files[0].name;
-            const title = fileName.replace(/\.mp3$/i, "");
-            titleInput.value = title;
+            titleInput.value = fileName.replace(/\.(mp3|wav|ogg)$/i, "");
         }
     });
 
     uploadForm.addEventListener('submit', (e) => {
         e.preventDefault();
         if (!token) {
-            showStatusMessage('Ошибка: вы не авторизованы.', 'error');
-            return;
+            return showStatusMessage('Ошибка: вы не авторизованы.', 'error');
+        }
+        if (!fileInput.files[0]) {
+            return showStatusMessage('Пожалуйста, выберите файл для загрузки.', 'error');
         }
 
         const formData = new FormData();
         formData.append('title', titleInput.value);
-        formData.append('collectionName', collectionSelect.value);
+        formData.append('collectionId', collectionSelect.value);
         formData.append('trackFile', fileInput.files[0]);
 
         progressBarContainer.style.display = 'block';
@@ -292,27 +300,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
-                const percentComplete = (event.loaded / event.total) * 100;
-                progressBarInner.style.width = percentComplete + '%';
-                progressBarInner.textContent = Math.round(percentComplete) + '%';
+                const percent = (event.loaded / event.total) * 100;
+                progressBarInner.style.width = percent + '%';
+                progressBarInner.textContent = Math.round(percent) + '%';
             }
         };
 
         xhr.onload = () => {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Загрузить трек';
-
             if (xhr.status === 201) {
                 const response = JSON.parse(xhr.responseText);
-                showStatusMessage(`Трек был загружен в Сборник "${response.collectionName}"`, 'success');
+                showStatusMessage(`Трек "${escapeHTML(response.title)}" отправлен на модерацию.`, 'success');
                 loadAuthorTracks();
-                setTimeout(() => hideUploadModal(), 2500);
+                setTimeout(hideUploadModal, 2500);
             } else {
-                const errorMsg = (xhr.responseText ? JSON.parse(xhr.responseText).message : null) || 'Произошла ошибка при загрузке.';
+                const errorMsg = (xhr.responseText ? JSON.parse(xhr.responseText).message : null) || 'Ошибка загрузки.';
                 showStatusMessage(errorMsg, 'error');
-                setTimeout(() => {
-                    progressBarContainer.style.display = 'none';
-                }, 2000);
+                setTimeout(() => progressBarContainer.style.display = 'none', 2000);
             }
         };
 
@@ -320,16 +325,22 @@ document.addEventListener('DOMContentLoaded', () => {
             showStatusMessage('Ошибка сети. Не удалось загрузить файл.', 'error');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Загрузить трек';
-            setTimeout(() => {
-                progressBarContainer.style.display = 'none';
-            }, 2000);
+            setTimeout(() => progressBarContainer.style.display = 'none', 2000);
         };
 
         xhr.send(formData);
     });
 
     function resetUploadForm() {
-        uploadForm.reset();
+        // Manually reset all relevant fields to their initial state
+        document.getElementById('upload-author').value = '';
+        document.getElementById('upload-title').value = '';
+        document.getElementById('track-file').value = '';
+        const collectionSelect = document.getElementById('upload-collection');
+        if (collectionSelect) {
+            collectionSelect.selectedIndex = 0;
+        }
+
         progressBarContainer.style.display = 'none';
         progressBarInner.style.width = '0%';
         progressBarInner.textContent = '';
@@ -342,6 +353,13 @@ document.addEventListener('DOMContentLoaded', () => {
         statusMessage.textContent = message;
         statusMessage.className = `status-message ${type}`;
         statusMessage.style.display = message ? 'block' : 'none';
+    }
+    
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"/]/g, tag => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;',
+            "'": '&#39;', '"': '&quot;', '/': '&#x2F;'
+        }[tag] || tag));
     }
 
     // --- Initial Load ---

@@ -55,8 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const trackItem = document.createElement('div');
                 trackItem.className = 'track-item';
 
-                // Defensive checks for author
+                // Defensive checks for author and collection
                 const authorName = track.author ? track.author.name : 'Неизвестный автор';
+                const collectionName = track.collectionId ? track.collectionId.name : 'Без сборника';
                 const canDelete = currentUser && track.author && (currentUser.id === track.author._id || currentUser.role === 'admin');
                 const deleteButtonHTML = canDelete ? `<a href="#" title="Удалить" class="delete-btn" data-id="${track._id}"><i class="fa fa-trash"></i></a>` : '';
 
@@ -66,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="track-info">
                         <p class="track-title">${track.title}</p>
-                        <p class="track-author">${authorName} / ${track.collectionName || 'Без сборника'}</p>
+                        <p class="track-author">${authorName} / ${collectionName}</p>
                     </div>
                     <div class="track-actions">
                         <a href="#" title="Поделиться"><i class="fa fa-share-alt"></i></a>
