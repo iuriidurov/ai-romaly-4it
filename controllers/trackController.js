@@ -28,12 +28,13 @@ exports.uploadTrack = async (req, res) => {
             return res.status(400).json({ message: 'Файл не был загружен.' });
         }
 
+        const status = req.user.role === 'admin' ? 'approved' : 'pending';
+
         const newTrack = new Track({
             title,
-
             filePath: req.file.path.replace(/\\/g, "/"),
-            author: req.user.id
-            // Статус по умолчанию 'pending' из модели
+            author: req.user.id,
+            status
         });
 
         const track = await newTrack.save();

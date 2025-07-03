@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const config = require('config');
+
 const User = require('../models/User');
 const Track = require('../models/Track');
 const fs = require('fs');
@@ -10,7 +10,7 @@ const path = require('path');
 // Helper function to generate and send JWT
 const generateToken = (user, res) => {
     const payload = { user: { id: user.id, role: user.role, name: user.name } };
-    jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 3600 }, (err, token) => {
+    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 3600 }, (err, token) => {
         if (err) {
             console.error('USER_CONTROLLER_ERROR: JWT Signing failed', err);
             return res.status(500).json({ msg: 'Ошибка при создании токена' });
