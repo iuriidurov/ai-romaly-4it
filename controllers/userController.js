@@ -7,6 +7,18 @@ const Track = require('../models/Track');
 const fs = require('fs');
 const path = require('path');
 
+// Helper function to generate and send JWT
+const generateToken = (user, res) => {
+    const payload = { user: { id: user.id, role: user.role, name: user.name } };
+    jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 3600 }, (err, token) => {
+        if (err) {
+            console.error('USER_CONTROLLER_ERROR: JWT Signing failed', err);
+            return res.status(500).json({ msg: 'Ошибка при создании токена' });
+        }
+        res.json({ token, role: user.role });
+    });
+};
+
 // @route   POST api/users/register
 // @desc    Register a new user
 // @access  Public
@@ -31,16 +43,10 @@ exports.register = async (req, res) => {
         user.password = await bcrypt.hash(password, salt);
         await user.save();
 
-        const payload = { user: { id: user.id, role: user.role, name: user.name } };
-        jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 3600 }, (err, token) => {
-            if (err) {
-                console.error('JWT Signing Error:', err);
-                return res.status(500).json({ msg: 'Ошибка при создании токена' });
-            }
-            res.json({ token, role: user.role });
-        });
+        generateToken(user, res);
+
     } catch (err) {
-        console.error('CONTROLLER_ERROR:', err);
+        console.error('USER_CONTROLLER_ERROR: Register failed', err);
         res.status(500).json({ msg: 'Ошибка на сервере' });
     }
 };
@@ -51,28 +57,20 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     const { emailOrPhone, password } = req.body;
     try {
-        // Find user by either email/phone or name
-        let user = await User.findOne({
-            $or: [
-                { emailOrPhone: emailOrPhone },
-                { name: emailOrPhone }
-            ]
-        });
-        if (!user) return res.status(400).json({ msg: 'Неверные учетные данные' });
+        let user = await User.findOne({ $or: [{ emailOrPhone }, { name: emailOrPhone }] });
+        if (!user) {
+            return res.status(400).json({ msg: 'Неверные учетные данные' });
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ msg: 'Неверные учетные данные' });
+        if (!isMatch) {
+            return res.status(400).json({ msg: 'Неверные учетные данные' });
+        }
 
-        const payload = { user: { id: user.id, role: user.role, name: user.name } };
-        jwt.sign(payload, config.get('jwtSecret'), { expiresIn: 3600 }, (err, token) => {
-            if (err) {
-                console.error('JWT Signing Error:', err);
-                return res.status(500).json({ msg: 'Ошибка при создании токена' });
-            }
-            res.json({ token, role: user.role });
-        });
+        generateToken(user, res);
+
     } catch (err) {
-        console.error('CONTROLLER_ERROR:', err);
+        console.error('USER_CONTROLLER_ERROR: Login failed', err);
         res.status(500).json({ msg: 'Ошибка на сервере' });
     }
 };
@@ -85,7 +83,7 @@ exports.getUsers = async (req, res) => {
         const users = await User.find().select('-password').sort({ name: 1 });
         res.json(users);
     } catch (err) {
-        console.error('CONTROLLER_ERROR:', err);
+        console.error('USER_CONTROLLER_ERROR: GetUsers failed', err);
         res.status(500).json({ msg: 'Ошибка на сервере' });
     }
 };
@@ -111,7 +109,7 @@ exports.forgotPassword = async (req, res) => {
 
         res.json({ msg: 'Если такой пользователь существует, на его адрес отправлены инструкции по восстановлению.' });
     } catch (err) {
-        console.error('FORGOT_PASSWORD_ERROR:', err);
+        console.error('USER_CONTROLLER_ERROR: ForgotPassword failed', err);
         res.status(500).json({ msg: 'Ошибка на сервере' });
     }
 };
@@ -139,7 +137,7 @@ exports.resetPassword = async (req, res) => {
 
         res.json({ msg: 'Пароль успешно обновлен.' });
     } catch (err) {
-        console.error('RESET_PASSWORD_ERROR:', err);
+        console.error('USER_CONTROLLER_ERROR: ResetPassword failed', err);
         res.status(500).json({ msg: 'Ошибка на сервере' });
     }
 };
@@ -148,11 +146,10 @@ exports.resetPassword = async (req, res) => {
 // @access  Public
 exports.getAuthors = async (req, res) => {
     try {
-        // Find users with the role 'author', select only their names, and limit to 10
-                const authors = await User.find({ role: { $in: ['author', 'admin'] } }).select('name -_id').limit(10);
+        const authors = await User.find({ role: { $in: ['author', 'admin'] } }).select('name -_id').limit(10);
         res.json(authors);
     } catch (err) {
-        console.error(err.message);
+        console.error('USER_CONTROLLER_ERROR: GetAuthors failed', err);
         res.status(500).send('Ошибка сервера');
     }
 };
@@ -165,7 +162,6 @@ exports.deleteUser = async (req, res) => {
         const userIdToDelete = req.params.id;
         const adminId = req.user.id;
 
-        // Admin cannot delete themselves
         if (userIdToDelete === adminId) {
             return res.status(400).json({ msg: 'Администратор не может удалить собственную учетную запись.' });
         }
@@ -175,10 +171,8 @@ exports.deleteUser = async (req, res) => {
             return res.status(404).json({ msg: 'Пользователь не найден.' });
         }
 
-        // Find and delete all tracks associated with the user
         const tracks = await Track.find({ author: userIdToDelete });
 
-        // Delete track files from the filesystem
         for (const track of tracks) {
             const trackPath = path.join(__dirname, '..', track.filePath);
             try {
@@ -186,20 +180,17 @@ exports.deleteUser = async (req, res) => {
                     fs.unlinkSync(trackPath);
                 }
             } catch (err) {
-                console.error(`Не удалось удалить файл трека: ${trackPath}`, err);
+                console.error(`USER_CONTROLLER_ERROR: Failed to delete track file ${trackPath}`, err);
             }
         }
 
-        // Delete tracks from the database
         await Track.deleteMany({ author: userIdToDelete });
-
-        // Delete the user
         await User.findByIdAndDelete(userIdToDelete);
 
         res.json({ msg: `Пользователь ${user.name} и все его треки были успешно удалены.` });
 
     } catch (err) {
-        console.error('DELETE_USER_ERROR:', err);
+        console.error('USER_CONTROLLER_ERROR: DeleteUser failed', err);
         res.status(500).json({ msg: 'Ошибка на сервере при удалении пользователя.' });
     }
 };
