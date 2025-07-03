@@ -1,31 +1,28 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
+
 const {
     getCollections,
+    getCollectionById,
     createCollection,
     updateCollection,
-    deleteCollection
+    deleteCollection,
+    addTrackToCollection,
+    removeTrackFromCollection
 } = require('../controllers/collectionController');
 
-// @route   GET api/collections
-// @desc    Get all collections
-// @access  Private
-router.get('/', auth, getCollections);
+// Public routes
+router.get('/', getCollections);
+router.get('/:id', getCollectionById);
 
-// @route   POST api/collections
-// @desc    Create a collection
-// @access  Private (Admin only)
-router.post('/', auth, createCollection);
-
-// @route   PUT api/collections/:id
-// @desc    Update a collection
-// @access  Private (Admin only)
-router.put('/:id', auth, updateCollection);
-
-// @route   DELETE api/collections/:id
-// @desc    Delete a collection
-// @access  Private (Admin only)
-router.delete('/:id', auth, deleteCollection);
+// Private/Admin routes
+// These routes are protected and require admin privileges.
+router.post('/', [auth, admin], createCollection);
+router.put('/:id', [auth, admin], updateCollection);
+router.delete('/:id', [auth, admin], deleteCollection);
+router.put('/:id/add-track', [auth, admin], addTrackToCollection);
+router.put('/:id/remove-track', [auth, admin], removeTrackFromCollection);
 
 module.exports = router;

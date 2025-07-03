@@ -23,9 +23,7 @@ app.use(express.static(path.join(__dirname, '')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB Connection
-const dbURI = config.get('mongoURI');
-
-mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log('MongoDB connected...');
         // Create admin user on startup if not exists
