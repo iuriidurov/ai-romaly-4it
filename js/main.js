@@ -210,12 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerForm = document.getElementById('register-form');
     const forgotPasswordForm = document.getElementById('forgot-password-form');
 
-    // --- Create Collection Modal Elements ---
-    const createCollectionBtn = document.getElementById('create-collection-btn');
-    const createCollectionModal = document.getElementById('create-collection-modal');
-    const createCollectionForm = document.getElementById('create-collection-form');
-    const closeCreateCollectionModalBtn = createCollectionModal ? createCollectionModal.querySelector('.close-btn') : null;
-
     // Show auth modal
     loginBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -339,58 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Create Collection Modal Logic ---
-    if (createCollectionBtn && createCollectionModal && createCollectionForm && closeCreateCollectionModalBtn) {
-        createCollectionBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            createCollectionModal.style.display = 'block';
-        });
 
-        closeCreateCollectionModalBtn.addEventListener('click', () => {
-            createCollectionModal.style.display = 'none';
-        });
-
-        window.addEventListener('click', (e) => {
-            if (e.target == createCollectionModal) {
-                createCollectionModal.style.display = 'none';
-            }
-        });
-
-        createCollectionForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const token = localStorage.getItem('token');
-            if (!token) {
-                alert('Необходима авторизация.');
-                return;
-            }
-
-            const formData = new FormData(createCollectionForm);
-
-            try {
-                const response = await fetch('/api/collections', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
-                });
-
-                const result = await response.json();
-                if (!response.ok) {
-                    throw new Error(result.msg || 'Не удалось создать сборник.');
-                }
-
-                alert('Сборник успешно создан!');
-                createCollectionModal.style.display = 'none';
-                createCollectionForm.reset();
-                loadCollectionsMenu(); // Refresh the collections list
-
-            } catch (error) {
-                console.error('Ошибка при создании сборника:', error);
-                alert(error.message);
-            }
-        });
-    }
 
     // Password visibility toggle
     document.querySelectorAll('.toggle-password').forEach(item => {
@@ -426,9 +369,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     logoutBtn.style.display = 'inline-block';
                     loginBtn.style.display = 'none';
 
-                    if (createCollectionBtn) {
-                        createCollectionBtn.style.display = user.role === 'admin' ? 'block' : 'none';
-                    }
                 } else {
                     throw new Error('Invalid token structure');
                 }
@@ -438,13 +378,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 cabinetLink.style.display = 'none';
                 logoutBtn.style.display = 'none';
                 loginBtn.style.display = 'inline-block';
-                if (createCollectionBtn) createCollectionBtn.style.display = 'none';
             }
         } else {
             cabinetLink.style.display = 'none';
             logoutBtn.style.display = 'none';
             loginBtn.style.display = 'inline-block';
-            if (createCollectionBtn) createCollectionBtn.style.display = 'none';
         }
     };
 

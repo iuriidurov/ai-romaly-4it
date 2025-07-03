@@ -187,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             closeModal();
             loadCollections();
+            loadCollectionsMenu();
         } catch (error) {
             alert(error.message);
         }
@@ -208,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     if (!res.ok) throw new Error('Ошибка удаления');
                     loadCollections();
+                    loadCollectionsMenu();
                 } catch (error) {
                     alert(error.message);
                 }
