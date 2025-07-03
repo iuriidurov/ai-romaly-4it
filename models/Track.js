@@ -11,9 +11,10 @@ const TrackSchema = new Schema({
         ref: 'User',
         required: true
     },
-    collectionName: {
+    status: {
         type: String,
-        required: false // A track might not belong to a collection
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
     },
     filePath: {
         type: String,

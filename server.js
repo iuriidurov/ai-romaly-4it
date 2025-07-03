@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -22,9 +23,7 @@ app.use(express.static(path.join(__dirname, '')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB Connection
-const dbURI = config.get('mongoURI');
-
-mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log('MongoDB connected...');
         // Create admin user on startup if not exists
@@ -60,9 +59,11 @@ app.get('/api', (req, res) => {
 // API Routes
 const trackRoutes = require('./routes/tracks');
 const userRoutes = require('./routes/users');
+const collectionRoutes = require('./routes/collections');
 
 app.use('/api/tracks', trackRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/collections', collectionRoutes);
 
 // Page Routes
 app.get('/', (req, res) => {
@@ -71,6 +72,14 @@ app.get('/', (req, res) => {
 
 app.get('/cabinet', (req, res) => {
     res.sendFile(path.join(__dirname, 'author.html'));
+});
+
+app.get('/admin-authors', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin-authors.html'));
+});
+
+app.get('/admin-collections', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin-collections.html'));
 });
 
 app.listen(PORT, () => {

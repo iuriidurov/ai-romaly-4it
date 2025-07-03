@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const admin = require('../middleware/admin'); // Импортируем middleware админа
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -9,21 +10,21 @@ const {
     uploadTrack,
     deleteTrack,
     getTracksByAuthor,
-    getCollections
+    getPendingTracks, // Импортируем новые функции
+    approveTrack,
+    rejectTrack
 } = require('../controllers/trackController');
 
 // Multer storage configuration
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const dir = 'uploads/';
-        // Ensure the uploads directory exists
         if (!fs.existsSync(dir)){
             fs.mkdirSync(dir, { recursive: true });
         }
         cb(null, dir);
     },
     filename: function (req, file, cb) {
-        // Use a timestamp for unique filenames to avoid conflicts
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
@@ -31,30 +32,27 @@ const storage = multer.diskStorage({
 // File filter for MP3 files
 const fileFilter = (req, file, cb) => {
     if (file.mimetype === 'audio/mpeg' || file.mimetype === 'audio/mp3') {
-        cb(null, true); // Accept file
+        cb(null, true);
     } else {
-        cb(new Error('Разрешены только .mp3 файлы!'), false); // Reject file
+        cb(new Error('Разрешены только .mp3 файлы!'), false);
     }
 };
 
 const upload = multer({ 
     storage: storage,
     fileFilter: fileFilter,
-    limits: { fileSize: 1024 * 1024 * 20 } // 20 MB file size limit
+    limits: { fileSize: 1024 * 1024 * 20 } // 20 MB
 });
 
-// @route   GET api/tracks/collections
-// @desc    Get all unique collection names
-// @access  Public
-router.get('/collections', getCollections);
+// --- Основные маршруты ---
 
 // @route   GET api/tracks
-// @desc    Get all tracks
+// @desc    Get all approved tracks
 // @access  Public
 router.get('/', getTracks);
 
 // @route   POST api/tracks/upload
-// @desc    Upload a track
+// @desc    Upload a track for moderation
 // @access  Private
 router.post('/upload', [auth, upload.single('trackFile')], uploadTrack);
 
@@ -67,5 +65,24 @@ router.delete('/:id', auth, deleteTrack);
 // @desc    Get tracks by a specific author
 // @access  Public
 router.get('/author/:authorId', getTracksByAuthor);
+
+
+// --- Маршруты для модерации (только для админа) ---
+
+// @route   GET api/tracks/pending
+// @desc    Get all tracks pending moderation
+// @access  Admin
+router.get('/pending', [auth, admin], getPendingTracks);
+
+// @route   PUT api/tracks/:id/approve
+// @desc    Approve a track
+// @access  Admin
+router.put('/:id/approve', [auth, admin], approveTrack);
+
+// @route   PUT api/tracks/:id/reject
+// @desc    Reject a track
+// @access  Admin
+router.put('/:id/reject', [auth, admin], rejectTrack);
+
 
 module.exports = router;

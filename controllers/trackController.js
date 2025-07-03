@@ -4,11 +4,12 @@ const fs = require('fs');
 const path = require('path');
 
 // @route   GET api/tracks
-// @desc    Get all tracks
+// @desc    Get all approved tracks
 // @access  Public
 exports.getTracks = async (req, res) => {
     try {
-        const tracks = await Track.find().populate('author', 'name _id').sort({ createdAt: -1 });
+        // Только одобренные треки для главной страницы
+        const tracks = await Track.find({ status: 'approved' }).populate('author', 'name _id').sort({ createdAt: -1 });
         res.json(tracks);
     } catch (err) {
         console.error(err.message);
@@ -17,33 +18,32 @@ exports.getTracks = async (req, res) => {
 };
 
 // @route   POST api/tracks/upload
-// @desc    Upload a track
+// @desc    Upload a track for moderation
 // @access  Private
 exports.uploadTrack = async (req, res) => {
     try {
-        const { title, collectionName } = req.body;
+        const { title } = req.body;
 
         if (!req.file) {
-            return res.status(400).json({ message: 'Файл не был загружен. Убедитесь, что это MP3 файл размером до 20МБ.' });
+            return res.status(400).json({ message: 'Файл не был загружен.' });
         }
+
+        const status = req.user.role === 'admin' ? 'approved' : 'pending';
 
         const newTrack = new Track({
             title,
-            collectionName,
-            filePath: req.file.path.replace(/\\/g, "/"), // Normalize path for consistency
-            author: req.user.id
+            filePath: req.file.path.replace(/\\/g, "/"),
+            author: req.user.id,
+            status
         });
 
         const track = await newTrack.save();
-        
-        // Populate author details to send back to the client
         const populatedTrack = await Track.findById(track._id).populate('author', 'name');
-
         res.status(201).json(populatedTrack);
 
     } catch (err) {
         console.error(err.message);
-                res.status(500).json({ message: 'Ошибка на сервере: ' + err.message });
+        res.status(500).json({ message: 'Ошибка на сервере: ' + err.message });
     }
 };
 
@@ -53,18 +53,14 @@ exports.uploadTrack = async (req, res) => {
 exports.deleteTrack = async (req, res) => {
     try {
         const track = await Track.findById(req.params.id);
-
         if (!track) {
             return res.status(404).json({ msg: 'Track not found' });
         }
 
-        // Check user authorization
-        // User must be the author or an admin to delete
-                if (req.user.role !== 'admin' && (!track.author || track.author.toString() !== req.user.id)) {
+        if (req.user.role !== 'admin' && track.author.toString() !== req.user.id) {
             return res.status(401).json({ msg: 'User not authorized' });
         }
 
-        // Delete the actual file from the server
         const filePath = path.join(__dirname, '..', track.filePath);
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
@@ -75,15 +71,12 @@ exports.deleteTrack = async (req, res) => {
 
     } catch (err) {
         console.error(err.message);
-        if (err.kind === 'ObjectId') {
-            return res.status(404).json({ msg: 'Track not found' });
-        }
         res.status(500).send('Server Error');
     }
 };
 
 // @route   GET api/tracks/author/:authorId
-// @desc    Get tracks by a specific author with pagination
+// @desc    Get tracks by a specific author (all statuses)
 // @access  Public
 exports.getTracksByAuthor = async (req, res) => {
     const { authorId } = req.params;
@@ -93,7 +86,7 @@ exports.getTracksByAuthor = async (req, res) => {
 
     try {
         const tracks = await Track.find({ author: authorId })
-            .populate('author', 'username _id')
+            .populate('author', 'name _id')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -111,39 +104,49 @@ exports.getTracksByAuthor = async (req, res) => {
     }
 };
 
-// @route   GET api/tracks/collections
-// @desc    Get all unique collection names
-// @access  Public
-const predefinedCollections = [
-    "Каверы известных песен",
-    "Извинение после ссоры",
-    "Признание в любви",
-    "Предложение руки и сердца",
-    "Свадебный подарок от друзей",
-    "Годовщина отношений",
-    "На день рождения/юбилей",
-    "Для ребёнка от родителей",
-    "Для друзей",
-    "Ребёнку на выступление",
-    "Прощание (переезд, утрата)",
-    "Для коллег по работе, начальнику",
-    "Мои топ-10"
-];
+// --- Маршруты для модерации ---
 
-// @route   GET api/tracks/collections
-// @desc    Get all unique collection names, merging predefined and DB ones
-// @access  Public
-exports.getCollections = async (req, res) => {
+// @route   GET api/tracks/pending
+// @desc    Get all tracks pending moderation
+// @access  Admin
+exports.getPendingTracks = async (req, res) => {
     try {
-        // Find all distinct collection names from tracks in the DB
-        const dbCollections = await Track.distinct('collectionName', { collectionName: { $ne: null, $ne: "" } });
-        
-        // Merge predefined with DB collections, ensure uniqueness, and sort alphabetically
-        const allCollections = [...new Set([...predefinedCollections, ...dbCollections])].sort();
-        
-        res.json(allCollections);
+        const tracks = await Track.find({ status: 'pending' }).populate('author', 'name').sort({ createdAt: 'desc' });
+        res.json(tracks);
     } catch (err) {
         console.error(err.message);
-        res.status(500).json({ message: 'Ошибка на сервере при получении списка сборников.' });
+        res.status(500).send('Server Error');
+    }
+};
+
+// @route   PUT api/tracks/:id/approve
+// @desc    Approve a track
+// @access  Admin
+exports.approveTrack = async (req, res) => {
+    try {
+        const track = await Track.findByIdAndUpdate(req.params.id, { status: 'approved' }, { new: true });
+        if (!track) {
+            return res.status(404).json({ msg: 'Track not found' });
+        }
+        res.json(track);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @route   PUT api/tracks/:id/reject
+// @desc    Reject a track
+// @access  Admin
+exports.rejectTrack = async (req, res) => {
+    try {
+        const track = await Track.findByIdAndUpdate(req.params.id, { status: 'rejected' }, { new: true });
+        if (!track) {
+            return res.status(404).json({ msg: 'Track not found' });
+        }
+        res.json(track);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
     }
 };

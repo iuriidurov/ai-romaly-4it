@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модерация треков - AI-Romaly</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>АІ-РОМАЛЫ</h1>
+            <p>Музыкальная нейроколлекция</p>
+        </div>
+
+        <div class="user-panel">
+            <a id="cabinet-link" href="/cabinet" class="user-info-link" style="display: none;">
+                <span id="username-display"></span> (<span id="user-role-display"></span>)
+            </a>
+            <a href="#" id="logout-btn" class="auth-btn" style="display: none;">ВЫЙТИ</a>
+            <a href="#" id="login-btn" class="auth-btn">ВОЙТИ В КАБИНЕТ</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="container page-container">
+            <div class="content-wrapper">
+                <h1 class="page-title">Треки на модерации</h1>
+                <p class="page-description">Здесь отображаются треки, загруженные авторами и ожидающие вашего одобрения.</p>
+                
+                <div class="moderation-track-list">
+                    <div class="track-list-header">
+                        <div class="track-info">Трек</div>
+                        <div class="track-actions">Действия</div>
+                    </div>
+                    <div id="moderation-list">
+                        <!-- Треки будут загружены сюда динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 AI-Romaly. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="js/admin-moderation.js"></script>
+</body>
+</html>

@@ -24,6 +24,14 @@ header {
     font-size: 0.9em;
 }
 
+.login-button button {
+    padding: 10px 20px;
+    background-color: #fff;
+    border: 1px solid #007bff;
+    color: #007bff;
+    cursor: pointer;
+    border-radius: 5px;
+}
 .search-bar {
     display: flex;
     flex-grow: 0.5;
@@ -44,15 +52,6 @@ header {
     color: white;
     cursor: pointer;
     border-radius: 0 5px 5px 0;
-}
-
-.login-button button {
-    padding: 10px 20px;
-    background-color: #fff;
-    border: 1px solid #007bff;
-    color: #007bff;
-    cursor: pointer;
-    border-radius: 5px;
 }
 
 .container {
@@ -398,10 +397,80 @@ aside ul li a:hover {
     width: 100%;
     padding: 10px;
     background-color: #007bff;
-    color: white;
+}
+
+/* General Button Styles */
+.btn {
+    padding: 8px 15px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* Admin Management Table */
+.table-management {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table-management th,
+.table-management td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.table-management th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.table-management tr:last-child td {
+    border-bottom: none;
+}
+
+.table-management tr:hover {
+    background-color: #f1f1f1;
+}
+
+.table-management .actions {
+    text-align: right;
+}
+
+.table-management .actions .btn {
+    margin-left: 10px;
 }
 
 #login-form p, #register-form p {
@@ -442,4 +511,368 @@ aside ul li a:hover {
 .btn-upload:hover {
     background-color: #0056b3; /* Darker blue on hover */
     transform: translateY(-2px);
+}
+
+/* Authors Management Table Styles */
+.authors-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden; /* Ensures the border-radius is applied to the table corners */
+}
+
+.authors-table th, .authors-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.authors-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #333;
+}
+
+.authors-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.authors-table .btn-delete {
+    padding: 8px 15px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #dc3545; /* Red for delete */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.authors-table .btn-delete:hover {
+    background-color: #c82333; /* Darker red on hover */
+    transform: translateY(-1px);
+}
+
+.authors-table .btn-delete:disabled {
+    background-color: #6c757d; /* Gray when disabled */
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* --- Track Moderation Status Styles --- */
+.track-item {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Adds space between elements */
+}
+
+.track-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.track-status {
+    flex-shrink: 0;
+    width: 120px; /* Fixed width for alignment */
+    text-align: center;
+}
+
+.status-label {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-pending {
+    background-color: #ffc107; /* Amber */
+}
+
+.status-approved {
+    background-color: #28a745; /* Green */
+}
+
+.status-rejected {
+    background-color: #dc3545; /* Red */
+}
+
+.play-btn:disabled {
+    cursor: not-allowed;
+    background-color: #e0e0e0;
+    border-color: #ccc;
+    color: #999;
+}
+
+/* --- Moderation Page --- */
+.page-container {
+    display: block;
+}
+
+.content-wrapper {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.page-description {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-bottom: 30px;
+}
+
+.moderation-track-list {
+    margin-top: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.track-list-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.moderation-track-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s;
+}
+
+.moderation-track-item:last-child {
+    border-bottom: none;
+}
+
+.moderation-track-item:hover {
+    background-color: #f8f9fa;
+}
+
+.track-list-header .track-info,
+.moderation-track-item .track-info {
+    flex: 3;
+}
+
+.track-list-header .track-author,
+.moderation-track-item .track-author {
+    flex: 2;
+}
+
+.track-list-header .track-actions,
+.moderation-track-item .track-actions {
+    flex: 1;
+    text-align: right;
+}
+
+/* Specific overrides for item rows */
+.moderation-track-item .track-author {
+    color: #6c757d;
+}
+
+.moderation-track-item .track-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.moderation-track-item .track-title {
+    font-weight: 500;
+    color: #333;
+}
+
+.moderation-track-item .btn {
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.moderation-track-item .btn-approve {
+    background-color: #28a745;
+    color: #fff;
+}
+.moderation-track-item .btn-approve:hover { background-color: #218838; }
+
+.moderation-track-item .btn-reject {
+    background-color: #dc3545;
+    color: #fff;
+}
+.moderation-track-item .btn-reject:hover { background-color: #c82333; }
+
+.empty-list-message {
+    padding: 20px;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+}
+
+
+/* --- Responsive Design --- */
+/* --- Admin Nav --- */
+.admin-nav {
+    display: flex;
+    gap: 15px;
+}
+
+.admin-nav a {
+    text-decoration: none;
+    color: #343a40;
+    font-weight: 500;
+    padding: 8px 15px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.admin-nav a:hover {
+    background-color: #d1e7ff;
+    border-color: #bde0fe;
+}
+
+.admin-nav a.active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+/* --- Admin/Author Header --- */
+.header {
+    background-color: #fff;
+    padding: 10px 0;
+    border-bottom: 1px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header .header-content {
+    display: flex;
+    align-items: center;
+}
+
+.header .logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.header .nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-left: 40px; /* Space between logo and nav */
+}
+
+.header .nav-menu a {
+    text-decoration: none;
+    color: #343a40;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 5px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.header .nav-menu a:hover,
+.header .nav-menu a.active {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.header .user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-left: auto; /* Push to the right */
+}
+
+.header .user-info #username-display {
+    font-weight: 600;
+}
+
+.header .user-info #user-role-display {
+    font-size: 0.75rem;
+    background-color: #e9ecef;
+    padding: 4px 10px;
+    border-radius: 12px;
+    color: #495057;
+    font-weight: 500;
+}
+
+.header .btn-logout {
+    background-color: transparent;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.header .btn-logout:hover {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav-menu {
+        margin-top: 10px;
+    }
+
+    .track-item, .moderation-track-item {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px;
+    }
+
+    .track-info, .moderation-track-item .track-info {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    .track-actions, .moderation-track-item .track-actions {
+        width: 100%;
+        justify-content: flex-start;
+        margin-left: 0;
+        margin-top: 15px;
+    }
+
+    .track-list-header {
+        display: none;
+    }
 }
