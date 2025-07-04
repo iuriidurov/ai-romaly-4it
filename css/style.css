@@ -168,6 +168,22 @@ aside ul li a:hover {
     background-color: #ddd;
 }
 
+/* --- Breadcrumbs --- */
+.breadcrumbs {
+    margin-bottom: 20px;
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+.breadcrumbs a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
 /* --- Collection Page Header --- */
 .collection-header {
     display: flex;
@@ -246,7 +262,9 @@ aside ul li a:hover {
 
 .modal input[type="text"],
 .modal input[type="file"],
-.modal select {
+.modal select,
+.modal textarea {
+    font-family: Arial, sans-serif; /* Ensure consistent font */
     width: 100%;
     padding: 12px 15px;
     border: 1px solid #e0e0e0;
@@ -256,10 +274,12 @@ aside ul li a:hover {
     box-sizing: border-box;
     font-size: 16px;
     transition: border-color 0.2s, box-shadow 0.2s;
+    resize: vertical;
 }
 
 .modal input[type="text"]:focus,
-.modal select:focus {
+.modal select:focus,
+.modal textarea:focus {
     outline: none;
     border-color: #00c49a;
     box-shadow: 0 0 0 3px rgba(0, 196, 154, 0.2);

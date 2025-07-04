@@ -5,7 +5,6 @@ function parseJwt(token) {
         const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
-
         return JSON.parse(jsonPayload);
     } catch (e) {
         console.error("Invalid token:", e);
@@ -13,22 +12,63 @@ function parseJwt(token) {
     }
 }
 
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>"'/]/g, tag => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;',
+        "'": '&#39;', '"': '&quot;', '/': '&#x2F;'
+    }[tag] || tag));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // --- DOM Elements ---
     const trackList = document.querySelector('.track-list');
-    const collectionsList = document.querySelector('.left-column ul');
+    const collectionsList = document.getElementById('collections-list');
+    const audioPlayer = document.getElementById('audio-player');
 
-    // Function to fetch and display collections in the left menu
+    // Auth Modal Elements
+    const authModal = document.getElementById('auth-modal');
+    const authModalCloseBtn = authModal.querySelector('.close-btn');
+    const cabinetLink = document.getElementById('cabinet-link');
+    const usernameDisplay = document.getElementById('username-display');
+    const userRoleDisplay = document.getElementById('user-role-display');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    const loginFormContainer = document.getElementById('login-form-container');
+    const registerFormContainer = document.getElementById('register-form-container');
+    const forgotPasswordFormContainer = document.getElementById('forgot-password-form-container');
+    
+    const showRegisterLink = document.getElementById('show-register');
+    const showLoginLink = document.getElementById('show-login');
+    const showForgotPasswordLink = document.getElementById('show-forgot-password');
+    const backToLoginLink = document.getElementById('back-to-login');
+
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const forgotPasswordForm = document.getElementById('forgot-password-form');
+
+
+    // Add to Collection Modal Elements
+    const addToCollectionModal = document.getElementById('add-to-collection-modal');
+    const addToCollectionForm = document.getElementById('add-to-collection-form');
+    const trackIdInput = document.getElementById('track-id-to-add');
+    const collectionSelect = document.getElementById('collection-select');
+    const addToCollectionCloseBtn = addToCollectionModal.querySelector('.close-btn');
+    const statusMessage = addToCollectionForm.querySelector('.status-message');
+
+    // --- State ---
+    let currentPlayingButton = null;
+
+    // --- DATA LOADING FUNCTIONS ---
+
     const loadCollectionsMenu = async () => {
-        const collectionsList = document.getElementById('collections-list');
-        if (!collectionsList) return; // Exit if the element doesn't exist
-
+        if (!collectionsList) return;
         try {
             const response = await fetch('/api/collections');
             if (!response.ok) throw new Error('Не удалось загрузить список сборников');
             const collections = await response.json();
-            
-            collectionsList.innerHTML = ''; // Clear previous list
-            
+            collectionsList.innerHTML = '';
             collections.forEach(collection => {
                 const listItem = document.createElement('li');
                 listItem.innerHTML = `<a href="/collection.html?id=${collection._id}">${escapeHTML(collection.name)}</a>`;
@@ -36,25 +76,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } catch (error) {
             console.error('Ошибка при загрузке меню сборников:', error);
-            if(collectionsList) collectionsList.innerHTML = '<li>Ошибка загрузки</li>';
+            if (collectionsList) collectionsList.innerHTML = '<li>Ошибка загрузки</li>';
         }
     };
 
-    function escapeHTML(str) {
-        if (!str) return '';
-        return str.replace(/[&<>"'/]/g, tag => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;',
-            "'": '&#39;', '"': '&quot;', '/': '&#x2F;'
-        }[tag] || tag));
-    }
-
-    // Function to fetch and display tracks
     const loadTracks = async () => {
         try {
             const response = await fetch('/api/tracks');
             if (!response.ok) throw new Error('Network response was not ok');
             const tracks = await response.json();
-            trackList.innerHTML = ''; // Clear current tracks
+            trackList.innerHTML = '';
 
             if (tracks.length === 0) {
                 trackList.innerHTML = '<p>Треков пока нет.</p>';
@@ -64,26 +95,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('token');
             const decodedToken = token ? parseJwt(token) : null;
             const currentUser = decodedToken ? decodedToken.user : null;
+            const isAdmin = currentUser && currentUser.role === 'admin';
 
             tracks.forEach(track => {
                 const trackItem = document.createElement('div');
                 trackItem.className = 'track-item';
-
-                // Defensive checks for author and collection
                 const authorName = track.author ? track.author.name : 'Неизвестный автор';
-                const collectionName = track.collectionId ? track.collectionId.name : 'Без сборника';
-                const canDelete = currentUser && track.author && (currentUser.id === track.author._id || currentUser.role === 'admin');
+                const canDelete = currentUser && track.author && (currentUser.id === track.author._id || isAdmin);
                 const deleteButtonHTML = canDelete ? `<a href="#" title="Удалить" class="delete-btn" data-id="${track._id}"><i class="fa fa-trash"></i></a>` : '';
+                const addToCollectionBtnHTML = isAdmin ? `<a href="#" title="Добавить в сборник" class="add-to-collection-btn" data-id="${track._id}"><i class="fa fa-plus"></i></a>` : '';
 
                 trackItem.innerHTML = `
                     <div class="track-play">
                         <button class="play-btn" data-src="/${track.filePath}"><i class="fa fa-play"></i></button>
                     </div>
                     <div class="track-info">
-                        <span class="track-title">${track.title}</span>
-                        <span class="track-author">${authorName}</span>
+                        <span class="track-title">${escapeHTML(track.title)}</span>
+                        <span class="track-author">${escapeHTML(authorName)}</span>
                     </div>
                     <div class="track-actions">
+                        ${addToCollectionBtnHTML}
                         <a href="#" title="Поделиться"><i class="fa fa-share-alt"></i></a>
                         ${deleteButtonHTML}
                         <a href="/${track.filePath}" title="Скачать" download><i class="fa fa-download"></i></a>
@@ -125,20 +156,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Audio Player Logic
-    const audioPlayer = document.getElementById('audio-player');
-    let currentPlayingButton = null;
+    // --- UI & EVENT LISTENERS ---
 
     trackList.addEventListener('click', async (e) => {
-        // Play/Pause Logic
         const playBtn = e.target.closest('.play-btn');
+        const deleteBtn = e.target.closest('.delete-btn');
+        const addToCollectionBtn = e.target.closest('.add-to-collection-btn');
+
         if (playBtn) {
             const isPlaying = playBtn.classList.contains('playing');
             document.querySelectorAll('.play-btn').forEach(btn => {
                 btn.innerHTML = '<i class="fa fa-play"></i>';
                 btn.classList.remove('playing');
             });
-
             if (isPlaying) {
                 audioPlayer.pause();
                 currentPlayingButton = null;
@@ -151,8 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Delete Logic
-        const deleteBtn = e.target.closest('.delete-btn');
         if (deleteBtn) {
             e.preventDefault();
             const trackId = deleteBtn.dataset.id;
@@ -161,9 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const token = localStorage.getItem('token');
                     const response = await fetch(`/api/tracks/${trackId}`, {
                         method: 'DELETE',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
+                        headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (!response.ok) {
                         const result = await response.json();
@@ -176,9 +202,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
+
+        if (addToCollectionBtn) {
+            e.preventDefault();
+            const trackId = addToCollectionBtn.dataset.id;
+            openAddToCollectionModal(trackId);
+        }
     });
 
-    // Reset button when track ends
     audioPlayer.addEventListener('ended', () => {
         if (currentPlayingButton) {
             currentPlayingButton.innerHTML = '<i class="fa fa-play"></i>';
@@ -187,29 +218,81 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Initial load
-    loadTracks();
-    loadCollectionsMenu();
+    // --- MODAL: Add to Collection ---
 
-    // --- Auth Modal Logic ---
-    const authModal = document.getElementById('auth-modal');
-    const authModalCloseBtn = authModal.querySelector('.close-btn');
-    const cabinetLink = document.getElementById('cabinet-link');
-    const usernameDisplay = document.getElementById('username-display');
-    const userRoleDisplay = document.getElementById('user-role-display');
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const loginFormContainer = document.getElementById('login-form-container');
-    const registerFormContainer = document.getElementById('register-form-container');
-    const forgotPasswordFormContainer = document.getElementById('forgot-password-form-container');
-    const showRegisterLink = document.getElementById('show-register');
-    const showLoginLink = document.getElementById('show-login');
-    const showForgotPasswordLink = document.getElementById('show-forgot-password');
-    const backToLoginLink = document.getElementById('back-to-login');
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    const forgotPasswordForm = document.getElementById('forgot-password-form');
+    const openAddToCollectionModal = async (trackId) => {
+        trackIdInput.value = trackId;
+        statusMessage.textContent = '';
+        statusMessage.style.display = 'none';
+        try {
+            const response = await fetch('/api/collections');
+            if (!response.ok) throw new Error('Не удалось загрузить сборники');
+            const collections = await response.json();
+            collectionSelect.innerHTML = '<option value="">Выберите сборник...</option>';
+            if (collections.length > 0) {
+                collections.forEach(collection => {
+                    const option = document.createElement('option');
+                    option.value = collection._id;
+                    option.textContent = escapeHTML(collection.name);
+                    collectionSelect.appendChild(option);
+                });
+            } else {
+                collectionSelect.innerHTML = '<option value="">Сборники не найдены</option>';
+            }
+            addToCollectionModal.style.display = 'block';
+        } catch (error) {
+            console.error('Ошибка при загрузке сборников:', error);
+            alert('Не удалось загрузить список сборников.');
+        }
+    };
 
+    const closeAddToCollectionModal = () => {
+        addToCollectionModal.style.display = 'none';
+    };
+
+    addToCollectionCloseBtn.addEventListener('click', closeAddToCollectionModal);
+
+    addToCollectionForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const trackId = trackIdInput.value;
+        const collectionId = collectionSelect.value;
+        const token = localStorage.getItem('token');
+        if (!collectionId) {
+            alert('Пожалуйста, выберите сборник.');
+            return;
+        }
+        statusMessage.textContent = '';
+        statusMessage.className = 'status-message';
+        statusMessage.style.display = 'none';
+        try {
+            const response = await fetch(`/api/collections/${collectionId}/add-track`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ trackId })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg || 'Не удалось добавить трек.');
+            
+            statusMessage.textContent = `Трек успешно добавлен в сборник!`;
+            statusMessage.className = 'status-message success';
+            statusMessage.style.display = 'block';
+
+            setTimeout(() => {
+                closeAddToCollectionModal();
+            }, 2000);
+
+        } catch (error) {
+            statusMessage.textContent = error.message;
+            statusMessage.className = 'status-message error';
+            statusMessage.style.display = 'block';
+        }
+    });
+
+    // --- MODAL: Auth ---
+    
     // Show auth modal
     loginBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -221,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         localStorage.removeItem('token');
         updateUIForAuthState();
-        loadTracks();
+        loadTracks(); // Reload tracks to update admin controls
     });
 
     // Hide auth modal
@@ -229,6 +312,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('click', (e) => {
         if (e.target == authModal) {
             authModal.style.display = 'none';
+        }
+        if (e.target == addToCollectionModal) {
+            addToCollectionModal.style.display = 'none';
         }
     });
 
@@ -254,6 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showLoginLink.addEventListener('click', (e) => { e.preventDefault(); showLoginForm(); });
     showForgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); showForgotPasswordForm(); });
     backToLoginLink.addEventListener('click', (e) => { e.preventDefault(); showLoginForm(); });
+
 
     // Login form submission
     loginForm.addEventListener('submit', async (e) => {
@@ -333,8 +420,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
-
     // Password visibility toggle
     document.querySelectorAll('.toggle-password').forEach(item => {
         item.addEventListener('click', e => {
@@ -354,7 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Function to update UI based on auth state
+    // --- UI Update Function ---
     const updateUIForAuthState = () => {
         const token = localStorage.getItem('token');
         if (token) {
@@ -364,11 +449,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const user = decodedToken.user;
                     usernameDisplay.textContent = user.name;
                     userRoleDisplay.textContent = user.role;
-
                     cabinetLink.style.display = 'inline';
                     logoutBtn.style.display = 'inline-block';
                     loginBtn.style.display = 'none';
-
                 } else {
                     throw new Error('Invalid token structure');
                 }
@@ -386,9 +469,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Initial data loading on page load
-    loadCollectionsMenu();
-    loadTracks();
-    loadTopAuthors();
-    updateUIForAuthState();
+    // --- Initial Load ---
+    const init = () => {
+        updateUIForAuthState();
+        loadCollectionsMenu();
+        loadTracks();
+        loadTopAuthors();
+    };
+
+    init();
 });
