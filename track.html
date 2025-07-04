@@ -24,7 +24,7 @@
                 <span id="username-display"></span> (<span id="user-role-display"></span>)
             </a>
             <a href="#" id="logout-btn" class="auth-btn" style="display: none;">ВЫЙТИ</a>
-            <a href="#" id="login-btn" class="auth-btn">ВОЙТИ В КАБИНЕТ</a>
+            <a href="javascript:void(0);" id="login-btn" class="auth-btn">ВОЙТИ В КАБИНЕТ</a>
         </div>
     </header>
 
@@ -43,6 +43,61 @@
         </div>
     </footer>
 
+    <script src="/js/auth.js"></script>
     <script src="js/track.js"></script>
+
+    <!-- Login/Register Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div id="login-form-container">
+                <h2>Вход в кабинет</h2>
+                <form id="login-form">
+                    <div class="input-group">
+                        <input type="text" name="emailOrPhone" placeholder="Email или телефон" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" name="password" id="login-password" placeholder="Пароль" required>
+                        <span class="toggle-password" data-target="login-password"><i class="far fa-eye"></i></span>
+                    </div>
+                    <button type="submit">Войти</button>
+                    <p>Нет аккаунта? <a href="#" id="show-register">Зарегистрироваться</a></p>
+                    <p style="text-align: center; margin-top: 10px;"><a href="#" id="show-forgot-password">Забыли пароль?</a></p>
+                </form>
+            </div>
+            <div id="forgot-password-form-container" style="display:none;">
+                <h2>Восстановление пароля</h2>
+                <form id="forgot-password-form">
+                    <p style="text-align: center; margin-bottom: 15px;">Введите ваш Email или телефон, и мы вышлем вам инструкции.</p>
+                    <div class="input-group">
+                        <input type="text" name="emailOrPhone" placeholder="Email или телефон" required>
+                    </div>
+                    <button type="submit">Отправить</button>
+                    <p style="text-align: center; margin-top: 10px;"><a href="#" id="back-to-login">Вернуться ко входу</a></p>
+                </form>
+            </div>
+            <div id="register-form-container" style="display:none;">
+                <h2>РЕГИСТРАЦИЯ</h2>
+                <form id="register-form">
+                    <div class="input-group">
+                        <input type="text" name="name" placeholder="Ваше имя" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" name="emailOrPhone" placeholder="Email или телефон" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" name="password" id="register-password" placeholder="Пароль" required>
+                        <span class="toggle-password" data-target="register-password"><i class="far fa-eye"></i></span>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" name="password2" id="register-password2" placeholder="Повторите пароль" required>
+                        <span class="toggle-password" data-target="register-password2"><i class="far fa-eye"></i></span>
+                    </div>
+                    <button type="submit">Создать аккаунт</button>
+                    <p>Уже есть аккаунт? <a href="#" id="show-login">Войти</a></p>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
