@@ -6,6 +6,54 @@ const path = require('path');
 // @route   GET api/tracks
 // @desc    Get all approved tracks
 // @access  Public
+// @route   GET api/tracks/:id
+// @desc    Get single track by ID
+// @access  Public
+exports.getTrackById = async (req, res) => {
+    try {
+        const track = await Track.findById(req.params.id).populate('author', 'name _id');
+
+        if (!track) {
+            return res.status(404).json({ msg: 'Трек не найден' });
+        }
+
+        // Трек доступен публично, если он одобрен
+        if (track.status === 'approved') {
+            return res.json(track);
+        }
+
+        // Если трек не одобрен, проверяем права доступа
+        // Эта логика требует, чтобы у пользователя был токен.
+        // Мы не будем использовать middleware, чтобы не блокировать публичный доступ к одобренным трекам.
+        const token = req.header('authorization')?.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ msg: 'Нет токена, доступ запрещен' });
+        }
+
+        try {
+            const jwt = require('jsonwebtoken');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = decoded.user;
+
+            // Доступ разрешен админу или автору трека
+            if (req.user.role === 'admin' || track.author._id.toString() === req.user.id) {
+                return res.json(track);
+            } else {
+                return res.status(403).json({ msg: 'Доступ к этому треку ограничен' });
+            }
+        } catch (jwtError) {
+            return res.status(401).json({ msg: 'Невалидный токен' });
+        }
+
+    } catch (err) {
+        console.error(err.message);
+        if (err.kind === 'ObjectId') {
+            return res.status(404).json({ msg: 'Трек не найден' });
+        }
+        res.status(500).send('Ошибка сервера');
+    }
+};
+
 exports.getTracks = async (req, res) => {
     try {
         // Только одобренные треки для главной страницы

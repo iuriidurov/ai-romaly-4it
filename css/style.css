@@ -878,6 +878,49 @@ aside ul li a:hover {
     margin-left: auto; /* Push to the right */
 }
 
+.track-page-content {
+    width: 50%;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-top: 20px;
+}
+
+.track-title-large {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.track-author-large {
+    font-size: 1.2em;
+    color: #777;
+    margin-bottom: 30px;
+}
+
+.track-audio-player {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.track-actions-large .btn-download {
+    display: inline-block;
+    background-color: #007bff;
+    color: #fff;
+    padding: 12px 25px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.track-actions-large .btn-download:hover {
+    background-color: #0056b3;
+    color: #fff;
+}
+
 .header .user-info #username-display {
     font-weight: 600;
 }

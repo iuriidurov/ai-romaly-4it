@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="track-actions">
                         ${addToCollectionBtnHTML}
-                        <a href="#" title="Поделиться"><i class="fa fa-share-alt"></i></a>
+                        <a href="#" title="Поделиться" class="share-btn" data-id="${track._id}"><i class="fa fa-share-alt"></i></a>
                         ${deleteButtonHTML}
                         <a href="/${track.filePath}" title="Скачать" download><i class="fa fa-download"></i></a>
                     </div>
@@ -162,6 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const playBtn = e.target.closest('.play-btn');
         const deleteBtn = e.target.closest('.delete-btn');
         const addToCollectionBtn = e.target.closest('.add-to-collection-btn');
+        const shareBtn = e.target.closest('.share-btn');
 
         if (playBtn) {
             const isPlaying = playBtn.classList.contains('playing');
@@ -207,6 +208,18 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const trackId = addToCollectionBtn.dataset.id;
             openAddToCollectionModal(trackId);
+        }
+
+        if (shareBtn) {
+            e.preventDefault();
+            const trackId = shareBtn.dataset.id;
+            const trackUrl = `${window.location.origin}/track.html?id=${trackId}`;
+            navigator.clipboard.writeText(trackUrl).then(() => {
+                alert('Ссылка на трек скопирована в буфер обмена!');
+            }).catch(err => {
+                console.error('Не удалось скопировать ссылку: ', err);
+                alert('Не удалось скопировать ссылку.');
+            });
         }
     });
 
