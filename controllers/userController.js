@@ -9,13 +9,23 @@ const path = require('path');
 
 // Helper function to generate and send JWT
 const generateToken = (user, res) => {
-    const payload = { user: { id: user.id, role: user.role, name: user.name } };
+    // Определяем роль. Если email совпадает с admin_email из .env, присваиваем роль 'admin'.
+    const userRole = (process.env.ADMIN_EMAIL && user.emailOrPhone === process.env.ADMIN_EMAIL) ? 'admin' : user.role;
+
+    const payload = { 
+        user: { 
+            id: user.id, 
+            role: userRole, 
+            name: user.name 
+        } 
+    };
+
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: 3600 }, (err, token) => {
         if (err) {
             console.error('USER_CONTROLLER_ERROR: JWT Signing failed', err);
             return res.status(500).json({ msg: 'Ошибка при создании токена' });
         }
-        res.json({ token, role: user.role });
+        res.json({ token, role: userRole });
     });
 };
 

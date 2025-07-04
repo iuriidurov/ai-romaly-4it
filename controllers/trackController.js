@@ -95,6 +95,38 @@ exports.uploadTrack = async (req, res) => {
     }
 };
 
+// @route   PUT api/tracks/:id
+// @desc    Update a track
+// @access  Private
+exports.updateTrack = async (req, res) => {
+    const { title } = req.body;
+
+    try {
+        let track = await Track.findById(req.params.id);
+
+        if (!track) {
+            return res.status(404).json({ msg: 'Трек не найден' });
+        }
+
+        // Проверка прав: пользователь - автор трека или админ
+        if (track.author.toString() !== req.user.id && req.user.role !== 'admin') {
+            return res.status(401).json({ msg: 'Нет прав для редактирования' });
+        }
+
+        track = await Track.findByIdAndUpdate(
+            req.params.id,
+            { $set: { title } },
+            { new: true }
+        ).populate('author', 'name _id');
+
+        res.json(track);
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Ошибка сервера');
+    }
+};
+
 // @route   DELETE api/tracks/:id
 // @desc    Delete a track
 // @access  Private
@@ -162,7 +194,7 @@ exports.getPendingTracks = async (req, res) => {
         const tracks = await Track.find({ status: 'pending' }).populate('author', 'name').sort({ createdAt: 'desc' });
         res.json(tracks);
     } catch (err) {
-        console.error(err.message);
+        console.error('TRACK CONTROLLER_ERROR: Failed to fetch pending tracks', err.message);
         res.status(500).send('Server Error');
     }
 };
