@@ -234,6 +234,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = '/';
     });
 
+    loginBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = '/author.html';
+    });
+
     // Event delegation for all actions inside the main container
     collectionDetailContainer.addEventListener('click', async (e) => {
         const playBtn = e.target.closest('.play-btn');

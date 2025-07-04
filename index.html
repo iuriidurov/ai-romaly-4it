@@ -10,8 +10,10 @@
 <body>
     <header>
         <div class="logo">
-            <h1>АІ-РОМАЛЫ</h1>
-            <p>Музыкальная нейроколлекция</p>
+            <a href="/" style="text-decoration: none; color: inherit;">
+                <h1>АІ-РОМАЛЫ</h1>
+                <p>Музыкальная нейроколлекция</p>
+            </a>
         </div>
         <div class="search-bar">
             <input type="text" placeholder="Поиск музыки...">
@@ -67,6 +69,25 @@
     <script src="/js/utils.js"></script>
     <script src="/js/main.js"></script>
     <audio id="audio-player"></audio>
+
+    <!-- Add Track to Collection Modal -->
+    <div id="add-to-collection-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Добавить трек в сборник</h2>
+            <form id="add-to-collection-form">
+                <input type="hidden" id="track-id-to-add">
+                <div class="form-group">
+                    <label for="collection-select">Выберите сборник:</label>
+                    <select id="collection-select" name="collectionId" required>
+                        <!-- Опции будут загружены здесь -->
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">Добавить</button>
+                 <div class="status-message"></div>
+            </form>
+        </div>
+    </div>
 
     <!-- Create Collection Modal -->
     <div id="create-collection-modal" class="modal">

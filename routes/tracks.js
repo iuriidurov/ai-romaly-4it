@@ -12,7 +12,8 @@ const {
     getTracksByAuthor,
     getPendingTracks, // Импортируем новые функции
     approveTrack,
-    rejectTrack
+    rejectTrack,
+    getTrackById
 } = require('../controllers/trackController');
 
 // Multer storage configuration
@@ -50,6 +51,11 @@ const upload = multer({
 // @desc    Get all approved tracks
 // @access  Public
 router.get('/', getTracks);
+
+// @route   GET api/tracks/:id
+// @desc    Get a single track by ID
+// @access  Public
+router.get('/:id', getTrackById);
 
 // @route   POST api/tracks/upload
 // @desc    Upload a track for moderation
