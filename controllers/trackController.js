@@ -95,6 +95,38 @@ exports.uploadTrack = async (req, res) => {
     }
 };
 
+// @route   PUT api/tracks/:id
+// @desc    Update a track
+// @access  Private
+exports.updateTrack = async (req, res) => {
+    const { title } = req.body;
+
+    try {
+        let track = await Track.findById(req.params.id);
+
+        if (!track) {
+            return res.status(404).json({ msg: 'Трек не найден' });
+        }
+
+        // Проверка прав: пользователь - автор трека или админ
+        if (track.author.toString() !== req.user.id && req.user.role !== 'admin') {
+            return res.status(401).json({ msg: 'Нет прав для редактирования' });
+        }
+
+        track = await Track.findByIdAndUpdate(
+            req.params.id,
+            { $set: { title } },
+            { new: true }
+        ).populate('author', 'name _id');
+
+        res.json(track);
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Ошибка сервера');
+    }
+};
+
 // @route   DELETE api/tracks/:id
 // @desc    Delete a track
 // @access  Private
@@ -162,7 +194,7 @@ exports.getPendingTracks = async (req, res) => {
         const tracks = await Track.find({ status: 'pending' }).populate('author', 'name').sort({ createdAt: 'desc' });
         res.json(tracks);
     } catch (err) {
-        console.error(err.message);
+        console.error('TRACK CONTROLLER_ERROR: Failed to fetch pending tracks', err.message);
         res.status(500).send('Server Error');
     }
 };
@@ -195,6 +227,51 @@ exports.rejectTrack = async (req, res) => {
         res.json(track);
     } catch (err) {
         console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @route   GET api/tracks/search
+// @desc    Search tracks by title or author name
+// @access  Public
+exports.searchTracks = async (req, res) => {
+    const { q, page = 1, limit = 20 } = req.query;
+
+    if (!q) {
+        return res.json({ tracks: [], totalPages: 0, currentPage: 1 });
+    }
+
+    try {
+        const queryRegex = new RegExp(q, 'i');
+
+        const authors = await User.find({ name: queryRegex }).select('_id');
+        const authorIds = authors.map(author => author._id);
+
+        const searchQuery = {
+            status: 'approved',
+            $or: [
+                { title: queryRegex },
+                { author: { $in: authorIds } }
+            ]
+        };
+
+        const totalTracks = await Track.countDocuments(searchQuery);
+        const totalPages = Math.ceil(totalTracks / limit);
+
+        const tracks = await Track.find(searchQuery)
+            .populate('author', 'name _id')
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(parseInt(limit));
+
+        res.json({ 
+            tracks,
+            totalPages,
+            currentPage: parseInt(page)
+        });
+
+    } catch (err) {
+        console.error('TRACK_CONTROLLER_ERROR: Search failed', err);
         res.status(500).send('Server Error');
     }
 };

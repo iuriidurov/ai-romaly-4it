@@ -13,7 +13,9 @@ const {
     getPendingTracks, // Импортируем новые функции
     approveTrack,
     rejectTrack,
-    getTrackById
+    getTrackById,
+    updateTrack,
+    searchTracks // Добавляем новую функцию для поиска
 } = require('../controllers/trackController');
 
 // Multer storage configuration
@@ -52,6 +54,21 @@ const upload = multer({
 // @access  Public
 router.get('/', getTracks);
 
+
+// --- Маршруты для модерации (только для админа) ---
+
+// @route   GET api/tracks/pending
+// @desc    Get all tracks pending moderation
+// @access  Admin
+router.get('/pending', [auth, admin], getPendingTracks);
+
+// --- Основные маршруты ---
+
+// @route   GET api/tracks/search
+// @desc    Search for tracks and authors
+// @access  Public
+router.get('/search', searchTracks);
+
 // @route   GET api/tracks/:id
 // @desc    Get a single track by ID
 // @access  Public
@@ -67,18 +84,15 @@ router.post('/upload', [auth, upload.single('trackFile')], uploadTrack);
 // @access  Private
 router.delete('/:id', auth, deleteTrack);
 
+// @route   PUT api/tracks/:id
+// @desc    Update a track
+// @access  Private
+router.put('/:id', auth, updateTrack);
+
 // @route   GET api/tracks/author/:authorId
 // @desc    Get tracks by a specific author
 // @access  Public
 router.get('/author/:authorId', getTracksByAuthor);
-
-
-// --- Маршруты для модерации (только для админа) ---
-
-// @route   GET api/tracks/pending
-// @desc    Get all tracks pending moderation
-// @access  Admin
-router.get('/pending', [auth, admin], getPendingTracks);
 
 // @route   PUT api/tracks/:id/approve
 // @desc    Approve a track

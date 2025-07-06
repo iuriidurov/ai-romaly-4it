@@ -24,6 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const audioPlayer = document.getElementById('audio-player');
     let currentPlayingButton = null;
 
+    // --- Edit Track Modal Elements ---
+    const editModal = document.getElementById('edit-track-modal');
+    const editForm = document.getElementById('edit-track-form');
+    const editTrackIdInput = document.getElementById('edit-track-id');
+    const editTitleInput = document.getElementById('edit-title');
+    const editCloseBtn = editModal.querySelector('.close-btn');
+    const editStatusMessage = document.getElementById('edit-status-message');
+
     const updateHeaderUI = () => {
         document.getElementById('username-display').textContent = currentUser.name;
         document.getElementById('user-role-display').textContent = currentUser.role;
@@ -78,8 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
             tracks.forEach(track => {
                 const trackItem = document.createElement('div');
                 trackItem.className = 'track-item';
-                const canDelete = currentUser && (currentUser.id === track.author._id || currentUser.role === 'admin');
-                const deleteButtonHTML = canDelete ? `<a href="#" title="Удалить" class="delete-btn" data-id="${track._id}"><i class="fa fa-trash"></i></a>` : '';
+                const canEditOrDelete = currentUser && (currentUser.id === track.author._id || currentUser.role === 'admin');
+                const editButtonHTML = canEditOrDelete ? `<a href="#" title="Редактировать" class="edit-btn" data-id="${track._id}" data-title="${escapeHTML(track.title)}"><i class="fa fa-pencil"></i></a>` : '';
+                const deleteButtonHTML = canEditOrDelete ? `<a href="#" title="Удалить" class="delete-btn" data-id="${track._id}"><i class="fa fa-trash"></i></a>` : '';
                 const statusLabel = getStatusLabel(track.status);
 
                 trackItem.innerHTML = `
@@ -88,12 +97,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="track-info">
                         <span class="track-title">${escapeHTML(track.title)}</span>
-                        <span class="track-author">${track.author ? escapeHTML(track.author.name) : 'Неизвестный автор'}</span>
+                        <span class="track-author">${escapeHTML(track.author.name)}</span>
                     </div>
                     <div class="track-status">
                         ${statusLabel}
                     </div>
                     <div class="track-actions">
+                        ${editButtonHTML}
                         ${deleteButtonHTML}
                     </div>
                 `;
@@ -141,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     trackList.addEventListener('click', async (e) => {
         const playBtn = e.target.closest('.play-btn');
         const deleteBtn = e.target.closest('.delete-btn');
+        const editBtn = e.target.closest('.edit-btn');
 
         if (playBtn) {
             e.preventDefault();
@@ -173,6 +184,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert(error.message);
                 }
             }
+        } else if (editBtn) {
+            e.preventDefault();
+            const trackId = editBtn.dataset.id;
+            const trackTitle = editBtn.dataset.title;
+            showEditModal(trackId, trackTitle);
         }
     });
 
@@ -216,6 +232,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function hideUploadModal() {
         uploadModal.style.display = 'none';
+    }
+
+    // --- Edit Track Modal Functions ---
+    function showEditModal(trackId, currentTitle) {
+        editTrackIdInput.value = trackId;
+        editTitleInput.value = currentTitle;
+        editStatusMessage.textContent = '';
+        editModal.style.display = 'block';
+    }
+
+    function hideEditModal() {
+        editModal.style.display = 'none';
+    }
+
+    editCloseBtn.addEventListener('click', hideEditModal);
+    window.addEventListener('click', (event) => {
+        if (event.target === editModal) {
+            hideEditModal();
+        }
+    });
+
+    editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const trackId = editTrackIdInput.value;
+        const newTitle = editTitleInput.value.trim();
+
+        if (!newTitle) {
+            showEditStatusMessage('Название не может быть пустым.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/tracks/${trackId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ title: newTitle })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.msg || 'Не удалось обновить трек.');
+            }
+
+            showEditStatusMessage('Трек успешно обновлен!', 'success');
+            loadAuthorTracks(); // Перезагружаем список треков
+            setTimeout(hideEditModal, 1500);
+
+        } catch (error) {
+            console.error('Ошибка при обновлении трека:', error);
+            showEditStatusMessage(error.message, 'error');
+        }
+    });
+
+    function showEditStatusMessage(message, type) {
+        editStatusMessage.textContent = message;
+        editStatusMessage.className = `status-message ${type}`;
     }
 
     const adminControls = document.getElementById('admin-controls');

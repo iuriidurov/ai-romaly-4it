@@ -1,58 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Элементы управления аутентификацией ---
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const cabinetLink = document.getElementById('cabinet-link');
-    const usernameDisplay = document.getElementById('username-display');
-    const userRoleDisplay = document.getElementById('user-role-display');
-
-    // --- Элементы страницы трека ---
     const trackContainer = document.getElementById('track-container');
     const params = new URLSearchParams(window.location.search);
     const trackId = params.get('id');
-
-    // --- Функции аутентификации ---
-    function parseJwt(token) {
-        try {
-            return JSON.parse(atob(token.split('.')[1]));
-        } catch (e) {
-            return null;
-        }
-    }
-
-    function checkAuth() {
-        const token = localStorage.getItem('token');
-        if (token) {
-            const decoded = parseJwt(token);
-            if (decoded && decoded.user) {
-                usernameDisplay.textContent = decoded.user.name;
-                userRoleDisplay.textContent = decoded.user.role;
-                loginBtn.style.display = 'none';
-                logoutBtn.style.display = 'inline-block';
-                cabinetLink.style.display = 'inline-block';
-            } else {
-                logout(); // Невалидный токен
-            }
-        } else {
-            loginBtn.style.display = 'inline-block';
-            logoutBtn.style.display = 'none';
-            cabinetLink.style.display = 'none';
-        }
-    }
-
-    function logout() {
-        localStorage.removeItem('token');
-        window.location.reload();
-    }
-
-    // --- Функции загрузки трека ---
-    function escapeHTML(str) {
-        if (!str) return '';
-        return str.replace(/[&<>\"'/]/g, tag => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;',
-            "'": '&#39;', '"': '&quot;', '/': '&#x2F;'
-        }[tag] || tag));
-    }
 
     const loadTrack = async () => {
         if (!trackId) {
@@ -87,21 +36,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Обработчики событий и инициализация ---
-    if (loginBtn) {
-        loginBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = '/login.html';
-        });
-    }
-
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            logout();
-        });
-    }
-
     loadTrack();
-    checkAuth();
 });
