@@ -14,7 +14,8 @@ const {
     approveTrack,
     rejectTrack,
     getTrackById,
-    updateTrack
+    updateTrack,
+    searchTracks // Добавляем новую функцию для поиска
 } = require('../controllers/trackController');
 
 // Multer storage configuration
@@ -62,6 +63,11 @@ router.get('/', getTracks);
 router.get('/pending', [auth, admin], getPendingTracks);
 
 // --- Основные маршруты ---
+
+// @route   GET api/tracks/search
+// @desc    Search for tracks and authors
+// @access  Public
+router.get('/search', searchTracks);
 
 // @route   GET api/tracks/:id
 // @desc    Get a single track by ID

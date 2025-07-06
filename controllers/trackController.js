@@ -230,3 +230,48 @@ exports.rejectTrack = async (req, res) => {
         res.status(500).send('Server Error');
     }
 };
+
+// @route   GET api/tracks/search
+// @desc    Search tracks by title or author name
+// @access  Public
+exports.searchTracks = async (req, res) => {
+    const { q, page = 1, limit = 20 } = req.query;
+
+    if (!q) {
+        return res.json({ tracks: [], totalPages: 0, currentPage: 1 });
+    }
+
+    try {
+        const queryRegex = new RegExp(q, 'i');
+
+        const authors = await User.find({ name: queryRegex }).select('_id');
+        const authorIds = authors.map(author => author._id);
+
+        const searchQuery = {
+            status: 'approved',
+            $or: [
+                { title: queryRegex },
+                { author: { $in: authorIds } }
+            ]
+        };
+
+        const totalTracks = await Track.countDocuments(searchQuery);
+        const totalPages = Math.ceil(totalTracks / limit);
+
+        const tracks = await Track.find(searchQuery)
+            .populate('author', 'name _id')
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(parseInt(limit));
+
+        res.json({ 
+            tracks,
+            totalPages,
+            currentPage: parseInt(page)
+        });
+
+    } catch (err) {
+        console.error('TRACK_CONTROLLER_ERROR: Search failed', err);
+        res.status(500).send('Server Error');
+    }
+};

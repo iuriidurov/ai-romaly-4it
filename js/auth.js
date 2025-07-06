@@ -12,6 +12,11 @@ function parseJwt(token) {
     }
 }
 
+let authReadyResolve;
+window.authReady = new Promise(resolve => {
+    authReadyResolve = resolve;
+});
+
 function escapeHTML(str) {
     if (!str) return '';
     return str.replace(/[&<>"'\/]/g, tag => ({
@@ -22,175 +27,161 @@ function escapeHTML(str) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const authModal = document.getElementById('auth-modal');
-    if (!authModal) return;
-
-    const authModalCloseBtn = authModal.querySelector('.close-btn');
     const cabinetLink = document.getElementById('cabinet-link');
     const usernameDisplay = document.getElementById('username-display');
     const userRoleDisplay = document.getElementById('user-role-display');
     const loginBtn = document.getElementById('login-btn');
     const logoutBtn = document.getElementById('logout-btn');
-    
-    const loginFormContainer = document.getElementById('login-form-container');
-    const registerFormContainer = document.getElementById('register-form-container');
-    const forgotPasswordFormContainer = document.getElementById('forgot-password-form-container');
-    
-    const showRegisterLink = document.getElementById('show-register');
-    const showLoginLink = document.getElementById('show-login');
-    const showForgotPasswordLink = document.getElementById('show-forgot-password');
-    const backToLoginLink = document.getElementById('back-to-login');
 
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    const forgotPasswordForm = document.getElementById('forgot-password-form');
+    if (authModal) {
+        const authModalCloseBtn = authModal.querySelector('.close-btn');
+        const loginFormContainer = document.getElementById('login-form-container');
+        const registerFormContainer = document.getElementById('register-form-container');
+        const forgotPasswordFormContainer = document.getElementById('forgot-password-form-container');
+        const showRegisterLink = document.getElementById('show-register');
+        const showLoginLink = document.getElementById('show-login');
+        const showForgotPasswordLink = document.getElementById('show-forgot-password');
+        const backToLoginLink = document.getElementById('back-to-login');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const forgotPasswordForm = document.getElementById('forgot-password-form');
 
-    if (loginBtn) {
-        loginBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            authModal.style.display = 'block';
-            showLoginForm();
-        });
-    }
-
-    if (authModalCloseBtn) {
-        authModalCloseBtn.addEventListener('click', () => {
-            authModal.style.display = 'none';
-        });
-    }
-
-    window.addEventListener('click', (e) => {
-        if (e.target == authModal) {
-            authModal.style.display = 'none';
-        }
-    });
-
-    function showLoginForm() {
-        loginFormContainer.style.display = 'block';
-        registerFormContainer.style.display = 'none';
-        forgotPasswordFormContainer.style.display = 'none';
-    }
-
-    function showRegisterForm() {
-        loginFormContainer.style.display = 'none';
-        registerFormContainer.style.display = 'block';
-        forgotPasswordFormContainer.style.display = 'none';
-    }
-
-    function showForgotPasswordForm() {
-        loginFormContainer.style.display = 'none';
-        registerFormContainer.style.display = 'none';
-        forgotPasswordFormContainer.style.display = 'block';
-    }
-
-    if (showRegisterLink) showRegisterLink.addEventListener('click', (e) => { e.preventDefault(); showRegisterForm(); });
-    if (showLoginLink) showLoginLink.addEventListener('click', (e) => { e.preventDefault(); showLoginForm(); });
-    if (showForgotPasswordLink) showForgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); showForgotPasswordForm(); });
-    if (backToLoginLink) backToLoginLink.addEventListener('click', (e) => { e.preventDefault(); showLoginForm(); });
-
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(loginForm);
-            const data = Object.fromEntries(formData.entries());
-            try {
-                const res = await fetch('/api/users/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if (!res.ok) throw new Error(result.msg || 'Ошибка входа');
-                localStorage.setItem('token', result.token);
-                if (result.role === 'author' || result.role === 'admin') {
-                    window.location.href = '/cabinet';
-                } else {
-                    authModal.style.display = 'none';
-                    updateUIForAuthState();
-                    window.location.reload(); 
-                }
-            } catch (err) {
-                alert(err.message);
-            }
-        });
-    }
-
-    if (registerForm) {
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(registerForm);
-            const data = Object.fromEntries(formData.entries());
-            if (data.password !== data.password2) {
-                return alert('Пароли не совпадают');
-            }
-            try {
-                const res = await fetch('/api/users/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if (!res.ok) throw new Error(result.msg || 'Ошибка регистрации');
-                localStorage.setItem('token', result.token);
-                if (result.role === 'author') {
-                    window.location.href = '/author.html';
-                } else {
-                    authModal.style.display = 'none';
-                    updateUIForAuthState();
-                    window.location.reload();
-                }
-            } catch (err) {
-                alert(err.message);
-            }
-        });
-    }
-
-    if (forgotPasswordForm) {
-        forgotPasswordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(forgotPasswordForm);
-            const data = Object.fromEntries(formData.entries());
-            try {
-                const res = await fetch('/api/users/forgot-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if (!res.ok) throw new Error(result.msg || 'Ошибка при отправке запроса');
-                alert('Если пользователь с таким Email или телефоном существует, мы выслали инструкции по восстановлению на указанный адрес.');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                authModal.style.display = 'block';
                 showLoginForm();
-            } catch (err) {
-                alert(err.message);
+            });
+        }
+
+        if (authModalCloseBtn) {
+            authModalCloseBtn.addEventListener('click', () => {
+                authModal.style.display = 'none';
+            });
+        }
+
+        window.addEventListener('click', (e) => {
+            if (e.target == authModal) {
+                authModal.style.display = 'none';
             }
+        });
+
+        function showLoginForm() {
+            if (!loginFormContainer || !registerFormContainer || !forgotPasswordFormContainer) return;
+            loginFormContainer.style.display = 'block';
+            registerFormContainer.style.display = 'none';
+            forgotPasswordFormContainer.style.display = 'none';
+        }
+
+        function showRegisterForm() {
+            if (!loginFormContainer || !registerFormContainer || !forgotPasswordFormContainer) return;
+            loginFormContainer.style.display = 'none';
+            registerFormContainer.style.display = 'block';
+            forgotPasswordFormContainer.style.display = 'none';
+        }
+
+        function showForgotPasswordForm() {
+            if (!loginFormContainer || !registerFormContainer || !forgotPasswordFormContainer) return;
+            loginFormContainer.style.display = 'none';
+            registerFormContainer.style.display = 'none';
+            forgotPasswordFormContainer.style.display = 'block';
+        }
+
+        if (showRegisterLink) showRegisterLink.addEventListener('click', (e) => { e.preventDefault(); showRegisterForm(); });
+        if (showLoginLink) showLoginLink.addEventListener('click', (e) => { e.preventDefault(); showLoginForm(); });
+        if (showForgotPasswordLink) showForgotPasswordLink.addEventListener('click', (e) => { e.preventDefault(); showForgotPasswordForm(); });
+        if (backToLoginLink) backToLoginLink.addEventListener('click', (e) => { e.preventDefault(); showLoginForm(); });
+
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(loginForm);
+                const data = Object.fromEntries(formData.entries());
+                try {
+                    const res = await fetch('/api/users/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await res.json();
+                    if (!res.ok) throw new Error(result.msg || 'Ошибка входа');
+                    localStorage.setItem('token', result.token);
+                    window.location.reload();
+                } catch (err) {
+                    alert(err.message);
+                }
+            });
+        }
+
+        if (registerForm) {
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(registerForm);
+                const data = Object.fromEntries(formData.entries());
+                try {
+                    const res = await fetch('/api/users/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await res.json();
+                    if (!res.ok) throw new Error(result.msg || 'Ошибка регистрации');
+                    localStorage.setItem('token', result.token);
+                    window.location.reload();
+                } catch (err) {
+                    alert(err.message);
+                }
+            });
+        }
+
+        if (forgotPasswordForm) {
+            forgotPasswordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(forgotPasswordForm);
+                const data = Object.fromEntries(formData.entries());
+                try {
+                    const res = await fetch('/api/users/forgot-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await res.json();
+                    if (!res.ok) throw new Error(result.msg || 'Ошибка при отправке запроса');
+                    alert('Если пользователь с таким Email или телефоном существует, мы выслали инструкции по восстановлению на указанный адрес.');
+                    showLoginForm();
+                } catch (err) {
+                    alert(err.message);
+                }
+            });
+        }
+
+        document.querySelectorAll('.toggle-password').forEach(item => {
+            item.addEventListener('click', e => {
+                const targetId = e.currentTarget.dataset.target;
+                const passwordInput = document.getElementById(targetId);
+                const icon = e.currentTarget.querySelector('i');
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
         });
     }
-
-    document.querySelectorAll('.toggle-password').forEach(item => {
-        item.addEventListener('click', e => {
-            const targetId = e.currentTarget.dataset.target;
-            const passwordInput = document.getElementById(targetId);
-            const icon = e.currentTarget.querySelector('i');
-
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        });
-    });
 
     const updateUIForAuthState = () => {
         const token = localStorage.getItem('token');
+        let user = null;
         if (cabinetLink && logoutBtn && loginBtn) {
             if (token) {
                 try {
                     const decodedToken = parseJwt(token);
                     if (decodedToken && decodedToken.user) {
-                        const user = decodedToken.user;
+                        user = decodedToken.user;
                         usernameDisplay.textContent = user.name;
                         userRoleDisplay.textContent = user.role;
                         cabinetLink.style.display = 'inline';
@@ -212,6 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginBtn.style.display = 'inline-block';
             }
         }
+        authReadyResolve(user);
     };
 
     if (logoutBtn) {

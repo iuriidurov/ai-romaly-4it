@@ -56,7 +56,28 @@
 
     <audio id="audio-player" src=""></audio>
 
+    <!-- Add to Collection Modal -->
+    <div id="add-to-collection-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3>Добавить трек в сборник</h3>
+            <form id="add-to-collection-form">
+                <input type="hidden" id="track-id-to-add">
+                <div class="form-group">
+                    <label for="collection-select">Выберите сборник:</label>
+                    <select id="collection-select" required>
+                        <!-- Options will be loaded dynamically -->
+                    </select>
+                </div>
+                <button type="submit" class="btn">Добавить</button>
+                <p class="status-message" style="display: none;"></p>
+            </form>
+        </div>
+    </div>
+
     <script src="/js/utils.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/header.js"></script>
     <script src="/js/search.js"></script>
 </body>
 </html>
